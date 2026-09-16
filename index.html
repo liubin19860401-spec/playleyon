@@ -956,9 +956,6 @@ function renderLevels() {
     levelList.appendChild(node);
     if (cur) curNode = node;
   });
-  /* 烤串签全长：absolute 定位的签子需显式高度=列表实际高度，才能随内容滚动全程可见 */
-  const trail = $('mapTrail');
-  if (trail) trail.style.height = Math.max(levelList.offsetHeight, 400) + 'px';
   /* 底部 CTA 与当前关联动（全通关时文案变化） */
   const btnGo = $('btnGo');
   if (btnGo) {
@@ -973,6 +970,9 @@ function renderLevels() {
   const scrollToCur = () => {
     const sc = $('mapScroll');
     if (!sc) return;
+    /* 烤串签全长：须在场景显示后测量（display:none 时 offsetHeight=0），随 rAF/setTimeout 双保险执行 */
+    const trail = $('mapTrail');
+    if (trail) trail.style.height = Math.max(levelList.offsetHeight, 400) + 'px';
     if (curNode) sc.scrollTop = Math.max(0, curNode.offsetTop - sc.clientHeight * 0.35);
     else sc.scrollTop = sc.scrollHeight;   // 全图通关：滚到底部
   };

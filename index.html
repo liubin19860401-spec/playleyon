@@ -226,7 +226,7 @@ body{
 /* ---------- 炸弹方块外观：保留原色参与匹配，叠加用户萌版炸弹图标 ---------- */
 .face.bomb::after{
   content:'';position:absolute;left:50%;top:50%;width:82%;height:82%;
-  transform:translate(-50%,-50%);background-image:url(bomb.png?v=0.5.0);background-position:center;background-size:contain;background-repeat:no-repeat;
+  transform:translate(-50%,-50%);background-image:url(bomb.png?v=0.5.1);background-position:center;background-size:contain;background-repeat:no-repeat;
   filter:drop-shadow(0 1.5px 3px rgba(0,0,0,.35));
 }
 
@@ -362,7 +362,7 @@ body{
 /* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
    但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
 (function () {
-  var VER = '0.5.0';
+  var VER = '0.5.1';
   try {
     var seen = localStorage.getItem('hongyu_ver');
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })

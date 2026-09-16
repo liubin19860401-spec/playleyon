@@ -976,24 +976,6 @@ function renderLevels() {
   requestAnimationFrame(scrollToCur);
   setTimeout(scrollToCur, 160);
 }
-    if (cur) inner += '<span class="go">闯第 ' + num + ' 关</span>';
-    if (!unlocked) inner += '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="1.5" fill="currentColor"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
-    node.innerHTML = inner;
-    if (unlocked) node.addEventListener('click', () => { initAudio(); preloadBackgrounds(); startLevel(i); });
-    levelList.appendChild(node);
-    if (cur) curNode = node;
-  });
-  /* 自动定位：当前关滚到视口上 1/3 处。
-   * rAF + setTimeout 双保险：页面被遮挡（微信 WebView 切后台等）时 rAF 可能被丢弃不触发 */
-  const scrollToCur = () => {
-    const sc = $('mapScroll');
-    if (!sc) return;
-    if (curNode) sc.scrollTop = Math.max(0, curNode.offsetTop - sc.clientHeight * 0.35);
-    else sc.scrollTop = sc.scrollHeight;   // 全图通关：滚到底部
-  };
-  requestAnimationFrame(scrollToCur);
-  setTimeout(scrollToCur, 160);
-}
 
 /* ============================================================
  * 四、关卡流程：开始 / 倒计时 / 胜负判定 / 结算浮层

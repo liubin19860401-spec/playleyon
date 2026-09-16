@@ -71,66 +71,240 @@ body{
 }
 .ghost-btn:active{color:#1c1b1a}
 
-/* ---------- 关卡选择：闯关地图（v0.5.0，竖向小径+节点三态+星级挂载） ---------- */
+/* ---------- 关卡选择：闯关地图（v0.6.0 商业化改版：晨光美食小镇 × 巨型烤串签） ---------- */
+/* 顶部 HUD 胶囊：漆木内阴影材质 */
 .map-head{
-  margin:0 10px;background:linear-gradient(180deg,rgba(28,27,26,.92),rgba(43,41,38,.88));
-  border:1.5px solid #1c1b1a;border-radius:10px;box-shadow:0 4px 14px rgba(28,27,26,.35);
-  padding:10px 16px;display:flex;justify-content:space-between;align-items:center;flex:none;
+  flex:none;margin:10px 12px 8px;height:50px;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0 18px;border:1.5px solid #3a2a1b;border-radius:999px;
+  background-image:linear-gradient(180deg,#2b2118,#1c1712);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.5),inset 0 -1px 0 rgba(255,255,255,.1),0 3px 8px rgba(28,27,26,.3);
 }
-.map-head-t{font-size:15px;font-weight:700;letter-spacing:.12em;color:#f4f1ea}
-.map-head-stars{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:15px;font-weight:700;color:#8a8276;display:flex;align-items:center;gap:4px}
-.map-head-stars .mh-star{color:#ffb224;font-style:normal;font-size:17px}
-.map-head-stars b{color:#ffb224;font-weight:800}
+.map-head-t{font-size:14px;font-weight:700;letter-spacing:.14em;color:#f4ede2}
+.map-head-stars{
+  display:flex;align-items:center;gap:4px;
+  font-family:ui-monospace,Consolas,Menlo,monospace;font-size:14px;font-weight:700;color:#b9a98f;
+}
+.map-head-stars .mh-star{font-style:normal;font-size:16px;color:#ffb224;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.map-head-stars b{color:#ffb224;font-size:17px}
+/* 地图视口：固定景深天空层 + 滚动内容层 */
+.map-viewport{position:relative;flex:1;min-height:0;overflow:hidden}
+.map-sky{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(180deg,#fff6e0 0%,#ffe7bd 36%,#ffd094 64%,#ffb877 100%);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+}
+.sun{
+  position:absolute;top:30px;left:50%;width:200px;height:200px;margin-left:-100px;border-radius:50%;
+  background-image:radial-gradient(circle at 50% 50%,rgba(255,236,170,.95) 0%,rgba(255,214,120,.5) 46%,rgba(255,214,120,0) 70%);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+}
+/* CSS 云：胶囊+双伪元素鼓包，仅 transform 漂移 */
+.cloud{
+  position:absolute;left:0;height:30px;border-radius:999px;background-color:#fffdf6;
+  box-shadow:inset 0 -4px 0 rgba(214,178,138,.28);
+}
+.cloud::before,.cloud::after{content:'';position:absolute;border-radius:50%;background-color:inherit}
+.cloud::before{width:46px;height:46px;top:-20px;left:20px}
+.cloud::after{width:32px;height:32px;top:-13px;right:18px}
+.c1{top:10%;width:112px;opacity:.9;animation:cloudDrift 88s linear infinite;animation-delay:-12s}
+.c2{top:21%;width:86px;opacity:.7;animation:cloudDrift 104s linear infinite;animation-delay:-60s}
+.c3{top:44%;width:68px;opacity:.5;animation:cloudDrift 122s linear infinite;animation-delay:-34s}
+.c4{top:66%;width:96px;opacity:.6;animation:cloudDrift 96s linear infinite;animation-delay:-78s}
+/* 地平线暖丘：两层剪影造景深 */
+.hill{position:absolute;border-radius:50% 50% 0 0 / 100% 100% 0 0}
+.h1{bottom:-70px;left:-60px;width:300px;height:150px;background-color:rgba(255,158,95,.35)}
+.h2{bottom:-92px;right:-80px;width:340px;height:170px;background-color:rgba(232,110,74,.22)}
+/* 滚动层 */
 #mapScroll{
-  position:relative;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;
-  border:1.5px solid #1c1b1a;border-radius:10px;margin:0 10px;
-  background:linear-gradient(180deg,#f7f4ec,#efe9db);
-  box-shadow:inset 0 2px 8px rgba(28,27,26,.08);
+  position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;
+  scrollbar-width:none;
 }
-/* 中央闯关小径：竖向虚线，纯 CSS 零图片 */
-#mapTrail{position:absolute;left:50%;top:0;bottom:0;width:0;border-left:3px dashed #d9d3c7;transform:translateX(-1.5px);pointer-events:none}
-#levelList{position:relative;display:flex;flex-direction:column;gap:56px;padding:46px 0 60px}
-/* 关卡节点：圆形按钮，左右交错 */
+#mapScroll::-webkit-scrollbar{display:none}
+/* 中央主题结构：巨型烤串签（替代旧虚线小径） */
+#mapTrail{position:absolute;left:50%;top:0;bottom:0;width:70px;margin-left:-35px;pointer-events:none}
+.stick{
+  position:absolute;left:50%;top:14px;bottom:14px;width:12px;margin-left:-6px;border-radius:7px;
+  background-image:linear-gradient(90deg,#b47a42 0%,#e8b978 46%,#c89058 100%);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  box-shadow:inset 0 0 0 1px rgba(58,42,27,.18);
+}
+.knob{
+  position:absolute;left:50%;width:20px;height:20px;margin-left:-10px;border-radius:50%;
+  background-color:#e8b978;
+  box-shadow:inset 0 -3px 0 rgba(58,42,27,.25),inset 0 2px 0 rgba(255,255,255,.5);
+}
+.knob.top{top:0}
+.knob.bottom{bottom:0}
+/* 签上食材块：现网五色系 */
+.chunk{
+  position:absolute;left:50%;width:34px;height:34px;margin-left:-17px;border-radius:11px;
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.35),inset 0 -4px 0 rgba(0,0,0,.16),0 2px 4px rgba(107,74,47,.28);
+}
+.k1{top:6%;background-color:#e5484d;transform:rotate(-7deg)}
+.k2{top:17%;background-color:#30a46c;transform:rotate(5deg)}
+.k3{top:29%;background-color:#ffedb8;transform:rotate(-4deg)}
+.k4{top:44%;background-color:#ffb224;transform:rotate(8deg)}
+.k5{top:58%;background-color:#e5484d;transform:rotate(-5deg)}
+.k6{top:72%;background-color:#30a46c;transform:rotate(6deg)}
+.k7{top:87%;background-color:#ffedb8;transform:rotate(-6deg)}
+#levelList{position:relative;display:flex;flex-direction:column;gap:72px;padding:36px 0 150px}
+/* 关卡节点：立体光泽徽章（按压回弹 130ms） */
 .lv-node{
-  position:relative;width:54px;height:54px;border-radius:50%;flex:none;
-  display:flex;align-items:center;justify-content:center;
-  font-family:ui-monospace,Consolas,Menlo,monospace;font-size:18px;font-weight:700;
-  border:none;padding:0;cursor:pointer;touch-action:manipulation;
-  transition:transform 120ms ease;
+  position:relative;width:66px;height:66px;flex:none;
+  border:none;padding:0;background-color:transparent;cursor:pointer;touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform 130ms cubic-bezier(.34,1.56,.64,1);
 }
-.lv-node:active{transform:scale(.94)}
-.lv-node .node-num{position:relative;z-index:1}
-.lv-node .node-lv{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:10px;color:#8a8276;white-space:nowrap;letter-spacing:.05em;font-family:inherit}
-/* 星级挂节点下方：金色实心=已得，灰=未得 */
-.node-stars{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:13px;letter-spacing:3px;font-style:normal;text-indent:3px}
-.node-stars .on{color:#ffb224;text-shadow:0 1px 2px rgba(255,178,36,.35)}
-.node-stars .off{color:#c9c2b4}
-/* 已通关：红玉红渐变圆 */
+.lv-node:active{transform:scale(.92)}
+.node-lv{
+  position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+  font-size:10px;font-weight:600;letter-spacing:.08em;color:#8a6a4a;white-space:nowrap;
+  background-color:rgba(255,251,240,.78);border:1px solid rgba(138,106,74,.22);border-radius:999px;
+  padding:2px 9px;
+}
+/* 态一：已通关 = 彩色光泽食物徽章 */
 .lv-node.done{
-  background:linear-gradient(180deg,#e5484d,#c73a3f);color:#fff;
-  box-shadow:0 3px 8px rgba(229,72,77,.4),inset 0 -2px 0 rgba(0,0,0,.2);
+  border-radius:50%;
+  background-image:linear-gradient(180deg,var(--ring) 0%,var(--ring-d) 100%);
+  background-color:var(--ring-d);background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  box-shadow:inset 0 3px 5px rgba(255,255,255,.45),inset 0 -5px 0 rgba(0,0,0,.2),0 6px 12px rgba(107,74,47,.3);
 }
-/* 当前关：白底红圈放大 + 呼吸脉冲 + 行动胶囊 */
+.lv-node.done::before{
+  content:'';position:absolute;top:7%;left:16%;width:52%;height:30%;border-radius:50%;
+  background-image:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,0));
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  pointer-events:none;
+}
+.lv-node.done .node-num{
+  position:absolute;left:50%;top:50%;width:76%;height:76%;transform:translate(-50%,-50%);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background-color:#fff9ec;
+  box-shadow:inset 0 -3px 4px rgba(0,0,0,.1),inset 0 2px 3px rgba(255,255,255,.85);
+}
+.lv-node.done .node-num img{width:84%;height:84%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(40,20,5,.22))}
+/* 星级挂下方 */
+.node-stars{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:14px;letter-spacing:3px;text-indent:3px;font-style:normal}
+.node-stars .on{color:#ffb224;text-shadow:0 1px 0 rgba(122,74,10,.35)}
+.node-stars .off{color:#cbbfa9;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+/* 态三：未解锁 = 灰底锁 */
+.lv-node.lock{
+  border-radius:50%;cursor:not-allowed;
+  background-image:linear-gradient(180deg,#d5cec0,#bfb7a6);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  box-shadow:inset 0 2px 3px rgba(255,255,255,.5),inset 0 -4px 0 rgba(0,0,0,.1),0 3px 7px rgba(107,74,47,.18);
+}
+.lv-node.lock .node-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8f867a}
+.lv-node.lock svg{width:20px;height:20px;color:#8f867a}
+.lv-node.lock .node-lv{color:#a09583;background-color:rgba(255,251,240,.6)}
+/* 态二：当前关 = 放大餐牌卡（白底红框+条纹雨棚+光晕脉动） */
 .lv-node.cur{
-  width:64px;height:64px;font-size:21px;background:#fff;color:#e5484d;
-  box-shadow:0 0 0 3px #e5484d,0 0 0 10px rgba(229,72,77,.15),0 4px 10px rgba(28,27,26,.25);
-  animation:nodePulse 1.6s ease-in-out infinite;
+  width:112px;min-height:114px;height:auto;border-radius:20px;padding:24px 8px 12px;z-index:2;
+  border:3px solid #e5484d;background-color:#fffbf2;
+  box-shadow:0 8px 16px rgba(229,72,77,.28),inset 0 -3px 0 rgba(28,27,26,.06),inset 0 2px 0 rgba(255,255,255,.9);
+  transform:rotate(-2deg);
+  animation:curIn .55s cubic-bezier(.2,1.5,.4,1) .1s backwards;
 }
-@keyframes nodePulse{
-  0%,100%{box-shadow:0 0 0 3px #e5484d,0 0 0 10px rgba(229,72,77,.15),0 4px 10px rgba(28,27,26,.25)}
-  50%{box-shadow:0 0 0 3px #e5484d,0 0 0 16px rgba(229,72,77,.07),0 4px 10px rgba(28,27,26,.25)}
+.lv-node.cur:active{transform:rotate(-2deg) scale(.96)}
+.lv-node.cur .node-lv{display:none}
+.lv-node.cur::before{
+  content:'';position:absolute;top:-3px;left:-3px;right:-3px;height:16px;
+  border-radius:18px 18px 8px 8px;
+  background-image:repeating-linear-gradient(90deg,#e5484d 0,#e5484d 12px,#fff3e0 12px,#fff3e0 24px);
+  background-position:left top;background-size:auto;background-repeat:repeat;
+  box-shadow:0 2px 3px rgba(229,72,77,.35);
 }
+.lv-node.cur::after{
+  content:'';position:absolute;inset:-16px;border-radius:28px;z-index:-1;
+  background-image:radial-gradient(closest-side,rgba(255,96,64,.45),rgba(255,96,64,0) 74%);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  animation:curPulse 1.8s ease-in-out infinite;
+}
+.menu-icon{display:block;width:34px;height:34px;margin:2px auto 5px}
+.menu-icon img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(40,20,5,.2))}
+.lv-node.cur .node-num{
+  position:static;width:auto;height:auto;transform:none;border-radius:0;background-color:transparent;box-shadow:none;
+  display:block;text-align:center;
+  font-family:ui-monospace,Consolas,Menlo,monospace;font-size:27px;font-weight:800;color:#e5484d;line-height:1.05;
+}
+.menu-sub{display:block;text-align:center;font-size:9px;font-weight:700;letter-spacing:.22em;color:#d0563f;margin-top:3px}
 .lv-node.cur .go{
-  position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);
-  background:#e5484d;color:#fff;font-size:11px;font-weight:700;letter-spacing:.1em;
-  padding:5px 14px;border-radius:999px;white-space:nowrap;
-  box-shadow:0 2px 6px rgba(229,72,77,.4);
+  position:absolute;bottom:-34px;left:50%;transform:translateX(-50%);
+  padding:5px 13px;border-radius:999px;white-space:nowrap;
+  background-color:#e5484d;
+  background-image:linear-gradient(180deg,#ff7a5e,#e5484d);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  color:#fff;font-size:11px;font-weight:700;letter-spacing:.1em;
+  box-shadow:0 3px 7px rgba(229,72,77,.45);
 }
-/* 未解锁：灰底锁图标 */
-.lv-node.lock{background:#c9c2b4;color:#f4f1ea;cursor:not-allowed;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
-.lv-node.lock svg{width:18px;height:18px;color:#f4f1ea}
-.lv-node.lock .node-lv{color:#b3aa9c}
-@media (max-width:340px){.lv-node{margin-left:10%!important;margin-right:10%!important}}
+/* 章节牌：木牌路标 */
+.zone-tag{
+  align-self:center;position:relative;flex:none;
+  padding:7px 22px;border-radius:9px;
+  background-image:linear-gradient(180deg,#8a5a33,#6b4a2f);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  color:#ffe7bd;font-size:11px;font-weight:700;letter-spacing:.18em;
+  box-shadow:0 3px 0 rgba(58,42,27,.4),inset 0 1px 0 rgba(255,255,255,.18);
+}
+.zone-tag::before,.zone-tag::after{
+  content:'';position:absolute;top:50%;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;
+  background-color:#3a2a1b;box-shadow:inset 0 1px 0 rgba(255,255,255,.3);
+}
+.zone-tag::before{left:7px}
+.zone-tag::after{right:7px}
+/* 底部常驻 CTA：大胶囊「闯 N 关」 */
+.cta-bar{
+  flex:none;
+  padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));
+  display:flex;justify-content:center;
+  background-image:linear-gradient(180deg,rgba(255,231,189,0) 0%,rgba(255,214,150,.55) 40%,#ffcf96 100%);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+}
+.cta-wrap{width:100%;animation:ctaBreath 2.4s ease-in-out 1.2s infinite}
+.cta-main{
+  position:relative;width:100%;height:58px;border:none;border-radius:999px;cursor:pointer;overflow:hidden;
+  color:#fff;font-family:inherit;font-size:19px;font-weight:800;letter-spacing:.24em;text-indent:.24em;
+  background-color:#e5484d;
+  background-image:linear-gradient(180deg,#ff8a4d 0%,#f4553f 48%,#e0353c 100%);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  box-shadow:0 6px 0 #b93238,0 12px 20px rgba(229,72,77,.35),inset 0 2px 0 rgba(255,255,255,.4);
+  animation:ctaIn .6s cubic-bezier(.2,1.6,.4,1) backwards;
+  -webkit-tap-highlight-color:transparent;
+}
+.cta-main::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:46%;
+  border-radius:999px 999px 40% 40%;
+  background-image:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0));
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  pointer-events:none;
+}
+.cta-main::after{
+  content:'';position:absolute;top:-20%;bottom:-20%;left:0;width:34px;
+  transform:translateX(-60px) skewX(-22deg);
+  background-image:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.55),rgba(255,255,255,0));
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  transition:transform .55s ease;pointer-events:none;
+}
+.cta-main:active{
+  transform:translateY(4px) scale(.985);
+  box-shadow:0 2px 0 #b93238,0 5px 10px rgba(229,72,77,.28),inset 0 2px 0 rgba(255,255,255,.35);
+}
+.cta-main:active::after{transform:translateX(430px) skewX(-22deg)}
+@media (max-width:340px){
+  .lv-node.done,.lv-node.lock{margin-left:8%!important;margin-right:8%!important}
+  .lv-node.cur{margin-left:4%!important;margin-right:4%!important}
+}
+/* v0.6.0 新增 keyframes：仅 transform/opacity，命名避让现有 8 组 */
+@keyframes cloudDrift{from{transform:translateX(-180px)}to{transform:translateX(570px)}}
+@keyframes curPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.15;transform:scale(1.08)}}
+@keyframes curIn{from{transform:rotate(-2deg) scale(.5);opacity:0}to{transform:rotate(-2deg) scale(1);opacity:1}}
+@keyframes ctaIn{from{transform:translateY(24px) scale(.7);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+@keyframes ctaBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+@media (prefers-reduced-motion:reduce){
+  .cloud,.lv-node.cur,.lv-node.cur::after,.cta-wrap,.cta-main{animation:none !important}
+  .cta-main::after{transition:none}
+}
 
 /* ---------- 顶部计分面板：深色半透明仪表牌 ---------- */
 .hud{
@@ -226,7 +400,7 @@ body{
 /* ---------- 炸弹方块外观：保留原色参与匹配，叠加用户萌版炸弹图标 ---------- */
 .face.bomb::after{
   content:'';position:absolute;left:50%;top:50%;width:82%;height:82%;
-  transform:translate(-50%,-50%);background-image:url(bomb.png?v=0.5.1);background-position:center;background-size:contain;background-repeat:no-repeat;
+  transform:translate(-50%,-50%);background-image:url(bomb.png?v=0.6.0);background-position:center;background-size:contain;background-repeat:no-repeat;
   filter:drop-shadow(0 1.5px 3px rgba(0,0,0,.35));
 }
 
@@ -300,14 +474,38 @@ body{
   </section>
 
   <!-- ================= 关卡选择场景 ================= -->
+  <!-- ================= 关卡选择场景（v0.6.0 商业化：晨光美食小镇） ================= -->
   <section id="scr-levels" class="screen">
     <div class="map-head">
       <span class="map-head-t">选择关卡</span>
       <span class="map-head-stars"><i class="mh-star">★</i><b id="totalStars">0</b><span>/</span><span id="maxStars">300</span></span>
     </div>
-    <div id="mapScroll">
-      <div id="mapTrail"></div>
-      <div id="levelList"></div>
+    <div class="map-viewport">
+      <div class="map-sky" aria-hidden="true">
+        <i class="sun"></i>
+        <i class="cloud c1"></i>
+        <i class="cloud c2"></i>
+        <i class="cloud c3"></i>
+        <i class="cloud c4"></i>
+        <i class="hill h1"></i>
+        <i class="hill h2"></i>
+      </div>
+      <div id="mapScroll">
+        <div id="mapTrail" aria-hidden="true">
+          <i class="knob top"></i>
+          <i class="stick"></i>
+          <i class="chunk k1"></i><i class="chunk k2"></i><i class="chunk k3"></i>
+          <i class="chunk k4"></i><i class="chunk k5"></i><i class="chunk k6"></i>
+          <i class="chunk k7"></i>
+          <i class="knob bottom"></i>
+        </div>
+        <div id="levelList"></div>
+      </div>
+    </div>
+    <div class="cta-bar">
+      <div class="cta-wrap">
+        <button id="btnGo" class="cta-main" type="button">开始闯关</button>
+      </div>
     </div>
     <button id="backCover" type="button" class="ghost-btn">← 返回封面</button>
   </section>
@@ -362,7 +560,7 @@ body{
 /* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
    但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
 (function () {
-  var VER = '0.5.1';
+  var VER = '0.6.0';
   try {
     var seen = localStorage.getItem('hongyu_ver');
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -706,25 +904,78 @@ function renderLevels() {
   $('totalStars').textContent = totalStars();
   $('maxStars').textContent = LEVELS.length * 3;
   levelList.innerHTML = '';
-  let curNode = null;
+  let curNode = null, curNum = 0;
+  /* 章节牌：每 20 关一章（5 章 × 20 关），插在章节首关之前 */
+  const ZONES = ['晨光小巷', '烟火市集', '麻辣街区', '深海食府', '盛宴之巅'];
   LEVELS.forEach((lv, i) => {
     const num = i + 1;
     const unlocked = num <= progress.unlocked;
     const cleared = num < progress.unlocked;      // 解锁数大于本关序号 = 已通关
-    const cur = num === progress.unlocked;        // 当前待攻关（最高解锁且未显示已通关的第 100 关可重打刷星）
+    const cur = num === progress.unlocked;        // 当前待攻关
+    if (num % 20 === 1) {
+      const zt = document.createElement('div');
+      zt.className = 'zone-tag';
+      zt.textContent = '第 ' + Math.ceil(num / 20) + ' 章 · ' + ZONES[Math.min(4, Math.floor((num - 1) / 20))];
+      levelList.appendChild(zt);
+    }
     const node = document.createElement('button');
     node.type = 'button';
     node.className = 'lv-node' + (cleared ? ' done' : '') + (cur ? ' cur' : '') + (!unlocked ? ' lock' : '');
-    /* 左右交错挂在中央小径两侧（参考藤蔓闯关图的空间结构） */
+    /* 左右交错挂在烤串签两侧（side-l/side-r 由 i%2 计算，同设计稿） */
     node.style.alignSelf = (i % 2 === 0) ? 'flex-start' : 'flex-end';
     if (i % 2 === 0) node.style.marginLeft = '17%'; else node.style.marginRight = '17%';
-    let inner = '<span class="node-lv">第 ' + num + ' 关</span><span class="node-num">' + num + '</span>';
-    if (cleared) {
+    let inner = '';
+    if (cur) {
+      /* 当前关 = 餐牌卡：食物图标 + 关号 + 「今日推荐」+ 行动胶囊 */
+      const iconIdx = i % 5;
+      inner += '<span class="menu-icon"><img src="item' + iconIdx + '.png" alt=""></span>';
+      inner += '<span class="node-num">' + num + '</span>';
+      inner += '<span class="menu-sub">今日推荐</span>';
+      inner += '<span class="go">闯第 ' + num + ' 关</span>';
+      curNum = num;
+    } else if (cleared) {
+      /* 已通关 = 彩色光泽徽章：环色轮换五色系 + 内嵌食物图标 + 星级挂下方 */
+      const ringSets = [['#e5484d', '#c73a3f'], ['#ffb224', '#e09a12'], ['#30a46c', '#238552'], ['#8e4ec6', '#6f3aa6'], ['#0091ff', '#0072cc']];
+      const rs = ringSets[i % 5];
+      node.style.setProperty('--ring', rs[0]);
+      node.style.setProperty('--ring-d', rs[1]);
+      const iconIdx = i % 5;
+      inner += '<span class="node-lv">第 ' + num + ' 关</span>';
+      inner += '<span class="node-num"><img src="item' + iconIdx + '.png" alt=""></span>';
       const st = progress.stars[num] | 0;
       let stars = '';
       for (let s = 1; s <= 3; s++) stars += '<i class="' + (s <= st ? 'on' : 'off') + '">★</i>';
       inner += '<span class="node-stars">' + stars + '</span>';
+    } else {
+      /* 未解锁 = 灰底锁 */
+      inner += '<span class="node-lv">第 ' + num + ' 关</span>';
+      inner += '<span class="node-num"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="1.5" fill="currentColor"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></span>';
     }
+    node.innerHTML = inner;
+    if (unlocked) node.addEventListener('click', () => { initAudio(); preloadBackgrounds(); startLevel(i); });
+    levelList.appendChild(node);
+    if (cur) curNode = node;
+  });
+  /* 底部 CTA 与当前关联动（全通关时文案变化） */
+  const btnGo = $('btnGo');
+  if (btnGo) {
+    if (curNum > 0) { btnGo.textContent = '闯 ' + curNum + ' 关'; btnGo.disabled = false; }
+    else { btnGo.textContent = '全部通关 🎉'; btnGo.disabled = true; }
+    btnGo.onclick = () => {
+      if (curNum <= 0) return;
+      initAudio(); preloadBackgrounds(); startLevel(curNum - 1);
+    };
+  }
+  /* 自动定位：当前关滚到视口上 1/3 处（rAF + setTimeout 双保险，微信 WebView 切后台 rAF 可能被丢弃） */
+  const scrollToCur = () => {
+    const sc = $('mapScroll');
+    if (!sc) return;
+    if (curNode) sc.scrollTop = Math.max(0, curNode.offsetTop - sc.clientHeight * 0.35);
+    else sc.scrollTop = sc.scrollHeight;   // 全图通关：滚到底部
+  };
+  requestAnimationFrame(scrollToCur);
+  setTimeout(scrollToCur, 160);
+}
     if (cur) inner += '<span class="go">闯第 ' + num + ' 关</span>';
     if (!unlocked) inner += '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="1.5" fill="currentColor"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
     node.innerHTML = inner;

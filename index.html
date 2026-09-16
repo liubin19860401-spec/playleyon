@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#f4f1ea">
+<meta name="format-detection" content="telephone=no,email=no,address=no"> <!-- 防 iOS 微信把数字串识别成电话号 -->
+<meta property="og:title" content="红玉的消消乐">
+<meta property="og:description" content="6x6 色块三消 · 5 关闯关 · 炸弹连爆，手机触屏即点即玩">
+<title>红玉的消消乐</title>
+<style>
+/* ============================================================
+   全局样式：暖纸底色 + 墨色文字，竖屏单屏布局
+   ============================================================ */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;overscroll-behavior:none} /* 禁页面边缘回弹，防滑动交换时整页被拖动 */
+body{
+  background:#f4f1ea;
+  color:#1c1b1a;
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  display:flex;justify-content:center;
+  position:fixed;inset:0;overflow:hidden; /* 锁定视口：微信 WebView 下禁整页滚动/回弹 */
+  padding:14px 12px calc(20px + env(safe-area-inset-bottom)); /* 底部避让 iPhone 小黑条 */
+  -webkit-user-select:none;user-select:none;   /* 禁长按选中文字 */
+  -webkit-touch-callout:none;                  /* 禁 iOS 长按菜单 */
+  -webkit-tap-highlight-color:transparent;     /* 去点按高亮 */
+  touch-action:manipulation;                   /* 禁双击缩放 */
+}
+.app{width:100%;max-width:500px;display:flex;flex-direction:column;gap:14px;min-height:100%;overflow:auto} /* 极矮屏下内部可滚，防止按钮被裁 */
+
+/* ---------- 场景切换：封面 / 关卡选择 / 游戏 ---------- */
+.screen{display:none;flex-direction:column;gap:14px;flex:1}
+.screen.on{display:flex}
+/* 关卡地图场景：约束在视口内，内部 #mapScroll 自行滚动（.app 可增长会吞掉 flex 约束，须显式 min-height:0） */
+#scr-levels{min-height:0}
+
+/* ---------- 封面 ---------- */
+/* ---------- 封面：全幅插画背景 + 底部渐变承托区 ---------- */
+#scr-cover{
+  justify-content:flex-end;align-items:stretch;text-align:center;gap:0;
+  position:relative;border-radius:6px;overflow:hidden;
+  background:url('cover.jpg') center 22% / cover no-repeat #f9e8ee; /* 人物上半部完整露出，偏粉底色与插画相融 */
+  padding:0;
+}
+.cover-shade{position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(to bottom,rgba(244,241,234,0) 0%,rgba(244,241,234,.86) 42%,#f4f1ea 100%);pointer-events:none}
+.cover-bottom{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 22px calc(24px + env(safe-area-inset-bottom))}
+.cover-swatches{display:flex;gap:10px}
+.cover-swatches i{width:20px;height:20px;border-radius:4px;display:block;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),0 0 0 2px rgba(255,255,255,.65)}
+.cover-swatches i:nth-child(1){background:#e5484d}
+.cover-swatches i:nth-child(2){background:#ffb224}
+.cover-swatches i:nth-child(3){background:#30a46c}
+.cover-swatches i:nth-child(4){background:#0091ff}
+.cover-swatches i:nth-child(5){background:#8e4ec6}
+.cover-title{font-size:36px;font-weight:700;letter-spacing:.08em;margin:0;color:#1c1b1a;text-shadow:0 1px 0 rgba(255,255,255,.8)}
+.cover-sub{font-size:12px;color:#3f3a33;letter-spacing:.18em;margin:0}
+#btnStart{box-shadow:0 0 0 1px rgba(28,27,26,.25)}
+
+/* ---------- 通用按钮 ---------- */
+.primary-btn{
+  border:none;background:#1c1b1a;color:#f4f1ea;
+  font-size:17px;font-weight:600;font-family:inherit;
+  padding:15px 18px;border-radius:4px;cursor:pointer;
+  touch-action:manipulation;width:100%;
+}
+.primary-btn:active{opacity:.82}
+.primary-btn:focus-visible{outline:3px solid #e5484d;outline-offset:2px}
+.ghost-btn{
+  border:none;background:transparent;color:#7d766c;
+  font-size:14px;font-family:inherit;padding:10px;cursor:pointer;
+  touch-action:manipulation;width:100%;
+}
+.ghost-btn:active{color:#1c1b1a}
+
+/* ---------- 关卡选择：闯关地图（v0.5.0，竖向小径+节点三态+星级挂载） ---------- */
+.map-head{
+  margin:0 10px;background:linear-gradient(180deg,rgba(28,27,26,.92),rgba(43,41,38,.88));
+  border:1.5px solid #1c1b1a;border-radius:10px;box-shadow:0 4px 14px rgba(28,27,26,.35);
+  padding:10px 16px;display:flex;justify-content:space-between;align-items:center;flex:none;
+}
+.map-head-t{font-size:15px;font-weight:700;letter-spacing:.12em;color:#f4f1ea}
+.map-head-stars{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:15px;font-weight:700;color:#8a8276;display:flex;align-items:center;gap:4px}
+.map-head-stars .mh-star{color:#ffb224;font-style:normal;font-size:17px}
+.map-head-stars b{color:#ffb224;font-weight:800}
+#mapScroll{
+  position:relative;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;
+  border:1.5px solid #1c1b1a;border-radius:10px;margin:0 10px;
+  background:linear-gradient(180deg,#f7f4ec,#efe9db);
+  box-shadow:inset 0 2px 8px rgba(28,27,26,.08);
+}
+/* 中央闯关小径：竖向虚线，纯 CSS 零图片 */
+#mapTrail{position:absolute;left:50%;top:0;bottom:0;width:0;border-left:3px dashed #d9d3c7;transform:translateX(-1.5px);pointer-events:none}
+#levelList{position:relative;display:flex;flex-direction:column;gap:56px;padding:46px 0 60px}
+/* 关卡节点：圆形按钮，左右交错 */
+.lv-node{
+  position:relative;width:54px;height:54px;border-radius:50%;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  font-family:ui-monospace,Consolas,Menlo,monospace;font-size:18px;font-weight:700;
+  border:none;padding:0;cursor:pointer;touch-action:manipulation;
+  transition:transform 120ms ease;
+}
+.lv-node:active{transform:scale(.94)}
+.lv-node .node-num{position:relative;z-index:1}
+.lv-node .node-lv{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:10px;color:#8a8276;white-space:nowrap;letter-spacing:.05em;font-family:inherit}
+/* 星级挂节点下方：金色实心=已得，灰=未得 */
+.node-stars{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:13px;letter-spacing:3px;font-style:normal;text-indent:3px}
+.node-stars .on{color:#ffb224;text-shadow:0 1px 2px rgba(255,178,36,.35)}
+.node-stars .off{color:#c9c2b4}
+/* 已通关：红玉红渐变圆 */
+.lv-node.done{
+  background:linear-gradient(180deg,#e5484d,#c73a3f);color:#fff;
+  box-shadow:0 3px 8px rgba(229,72,77,.4),inset 0 -2px 0 rgba(0,0,0,.2);
+}
+/* 当前关：白底红圈放大 + 呼吸脉冲 + 行动胶囊 */
+.lv-node.cur{
+  width:64px;height:64px;font-size:21px;background:#fff;color:#e5484d;
+  box-shadow:0 0 0 3px #e5484d,0 0 0 10px rgba(229,72,77,.15),0 4px 10px rgba(28,27,26,.25);
+  animation:nodePulse 1.6s ease-in-out infinite;
+}
+@keyframes nodePulse{
+  0%,100%{box-shadow:0 0 0 3px #e5484d,0 0 0 10px rgba(229,72,77,.15),0 4px 10px rgba(28,27,26,.25)}
+  50%{box-shadow:0 0 0 3px #e5484d,0 0 0 16px rgba(229,72,77,.07),0 4px 10px rgba(28,27,26,.25)}
+}
+.lv-node.cur .go{
+  position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);
+  background:#e5484d;color:#fff;font-size:11px;font-weight:700;letter-spacing:.1em;
+  padding:5px 14px;border-radius:999px;white-space:nowrap;
+  box-shadow:0 2px 6px rgba(229,72,77,.4);
+}
+/* 未解锁：灰底锁图标 */
+.lv-node.lock{background:#c9c2b4;color:#f4f1ea;cursor:not-allowed;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.lv-node.lock svg{width:18px;height:18px;color:#f4f1ea}
+.lv-node.lock .node-lv{color:#b3aa9c}
+@media (max-width:340px){.lv-node{margin-left:10%!important;margin-right:10%!important}}
+
+/* ---------- 顶部计分面板：深色半透明仪表牌 ---------- */
+.hud{
+  margin:0 10px;background:linear-gradient(180deg,rgba(28,27,26,.92),rgba(43,41,38,.88));
+  border:1.5px solid #1c1b1a;border-radius:10px;box-shadow:0 4px 14px rgba(28,27,26,.35);
+  padding:10px 14px 12px;
+}
+.hud-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hud-row + .hud-row{margin-top:9px;padding-top:8px;border-top:1px dashed rgba(255,255,255,.16)}
+.hud-label{font-size:9px;letter-spacing:.14em;color:#c9c2b4;margin-bottom:2px}
+.hud-val{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:15px;font-weight:700;line-height:1;color:#f4f1ea}
+.hud-val.time-low{color:#ff7a7f}   /* 剩余时间 ≤5s 红色告警 */
+.hud-title{display:none}   /* 旧版标题位弃用：面板化后信息已紧凑 */
+.hud-score{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:26px;font-weight:800;line-height:1.05;color:#f4f1ea;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.hud-target-val{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:15px;font-weight:700;color:#ffb224}
+.hud-combo{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:12px;font-weight:700;color:#8a8276;padding:3px 9px;border-radius:999px;box-shadow:inset 0 0 0 1px #5a544b;line-height:1.3}
+.hud-combo.on{color:#fff;background:#e5484d;box-shadow:0 0 0 1.5px rgba(255,255,255,.25)}
+
+/* 目标进度条：得分 / 目标 实时填充 */
+.hud-bar{margin-top:8px;height:6px;background:rgba(255,255,255,.14);border-radius:999px;overflow:hidden;position:relative}
+.hud-bar i{position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,#ffb224,#e5484d);border-radius:999px;transition:width .35s ease}
+.hud-bar em{position:absolute;top:-2px;bottom:-2px;right:0;width:2px;background:rgba(255,255,255,.55)}
+
+/* ---------- 操作提示 ---------- */
+.hint{font-size:11px;color:#8a8276;text-align:center;margin:-4px 0 0}
+
+/* ---------- 棋盘 ---------- */
+#boardWrap{display:flex;justify-content:center;flex:1;align-items:center} /* 撑满剩余高度，让棋盘居中在背景上 */
+#board{
+  position:relative;background:rgba(244,241,234,.85);border-radius:10px;touch-action:none;
+  border:4px solid #6b4a2f;                                    /* 木框：深木色 */
+  box-shadow:0 6px 20px rgba(28,27,26,.35),inset 0 0 0 2px rgba(255,255,255,.55); /* 外投影 + 内衬白线 */
+  transition:background .3s ease,box-shadow .3s ease;
+}
+#board::before,#board::after{content:'';position:absolute;width:8px;height:8px;background:#3a2a1b;border-radius:50%;box-shadow:inset 0 1px 1px rgba(255,255,255,.4);z-index:3} /* 铆钉（上两颗） */
+#board::before{top:6px;left:6px}
+#board::after{top:6px;right:6px}
+#board.hide-tiles{background:transparent;box-shadow:none;border-color:transparent} /* 庆祝时撤掉木框与底色，露出关卡背景插画 */
+#board.hide-tiles::before,#board.hide-tiles::after{display:none}
+
+/* ---------- 关卡随机背景 ---------- */
+#gameBg{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;transition:opacity .4s ease}
+#gameBg::after{content:'';position:absolute;inset:0;background:rgba(244,241,234,.30)} /* 纸色半透明蒙层：插画做背景但不抢色块 */
+#board.quake{animation:quake 320ms ease}   /* 炸弹爆炸屏幕震动（桌面兜底，手机另有 navigator.vibrate） */
+@keyframes quake{
+  15%{transform:translate(-4px,3px)}30%{transform:translate(4px,-2px)}
+  45%{transform:translate(-3px,-3px)}60%{transform:translate(3px,2px)}
+  75%{transform:translate(-2px,1px)}100%{transform:translate(0,0)}
+}
+
+/* ---------- 方块：外层管位置动画，内层 face 管缩放/消除动画 ---------- */
+.tile{position:absolute;top:0;left:0;transition:transform 150ms ease;will-change:transform}
+.face{
+  width:100%;height:100%;border-radius:4px;position:relative;
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.18);           /* 底部厚度感，纯 CSS */
+  transition:transform 200ms ease,opacity 200ms ease;
+}
+/* 食物图标层：88% 大小居中叠印在色块上，白描边 + 投影增强可读与立体感 */
+.face::after{
+  content:'';position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);
+  width:88%;height:88%;background:var(--icon) center/contain no-repeat;
+  filter:drop-shadow(0 0 1.5px rgba(255,255,255,.95)) drop-shadow(0 0 3px rgba(255,255,255,.75)) drop-shadow(0 2px 3px rgba(0,0,0,.3));
+  pointer-events:none;
+}
+.face.sel{outline:3px solid #1c1b1a;outline-offset:2px;transform:scale(1.07)}  /* 选中高亮 */
+.face.pop{animation:pop 240ms ease backwards}                                  /* 生成/重排弹出 */
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* 待消除预告：轻抖动 + 小幅旋转，结束后接缩放消失 */
+.face.shake{animation:tremble 200ms ease-in-out}
+@keyframes tremble{
+  0%{transform:rotate(0deg) scale(1)}
+  20%{transform:rotate(-7deg) translateX(-2px) scale(1.04)}
+  40%{transform:rotate(6deg) translateX(2px) scale(1.06)}
+  60%{transform:rotate(-5deg) translateX(-2px) scale(1.07)}
+  80%{transform:rotate(4deg) translateX(1px) scale(1.08)}
+  100%{transform:rotate(0deg) scale(1.08)}
+}
+
+/* ---------- 破碎碎片（消除特效） ---------- */
+.shard{position:absolute;pointer-events:none;will-change:transform,opacity;animation:shardFly 420ms cubic-bezier(.18,.56,.4,1) forwards}
+@keyframes shardFly{
+  0%{transform:translate(0,0) rotate(0deg);opacity:1}
+  70%{opacity:1}
+  100%{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}
+}
+
+/* ---------- 飞行图标（消除时飞向得分面板） ---------- */
+.fly-icon{position:fixed;z-index:40;pointer-events:none;background:var(--icon) center/contain no-repeat;will-change:transform,opacity}
+@keyframes scorePulse{0%{transform:scale(1)}45%{transform:scale(1.28)}100%{transform:scale(1)}}
+.score-pulse{animation:scorePulse .32s ease}
+
+/* ---------- 炸弹方块外观：保留原色参与匹配，叠加用户萌版炸弹图标 ---------- */
+.face.bomb::after{
+  content:'';position:absolute;left:50%;top:50%;width:82%;height:82%;
+  transform:translate(-50%,-50%);background-image:url(bomb.png?v=0.5.0);background-position:center;background-size:contain;background-repeat:no-repeat;
+  filter:drop-shadow(0 1.5px 3px rgba(0,0,0,.35));
+}
+
+/* 5 色色板（与设计文档定稿一致），--icon 为对应食物素材（图标按用户素材实际内容映射） */
+.f0{background:#e5484d;--icon:url(item0.png)}  /* 红 · 牛肉面 */
+.f1{background:#ffb224;--icon:url(item1.png)}  /* 琥珀 · 汉堡 */
+.f2{background:#30a46c;--icon:url(item2.png)}  /* 绿 · 冰饮 */
+.f3{background:#0091ff;--icon:url(item3.png)}  /* 蓝 · 榴莲 */
+.f4{background:#8e4ec6;--icon:url(item4.png)}  /* 紫 · 火锅 */
+
+/* ---------- 胜利/失败结算浮层 ---------- */
+.ov{position:fixed;inset:0;background:rgba(28,27,26,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:24px}
+.ov.hidden{display:none}
+
+/* ---------- 通关庆祝：隐藏方块 + 大字庆祝 ---------- */
+#board.hide-tiles .tile{opacity:0 !important;pointer-events:none;transition:opacity .3s ease}
+#winFlash{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:45;pointer-events:none}
+#winFlash.on{display:flex;animation:winPop .55s cubic-bezier(.2,1.4,.4,1) backwards;background:radial-gradient(ellipse at center,rgba(28,27,26,.44) 0%,rgba(28,27,26,.18) 60%,rgba(28,27,26,.30) 100%)} /* 暗色渐变衬底：背景图可见但文字可读 */
+.win-big{font-size:44px;font-weight:800;letter-spacing:.12em;color:#3ddc84;background:rgba(28,27,26,.58);border-radius:12px;padding:12px 26px;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);text-shadow:0 2px 10px rgba(0,0,0,.5)}
+.win-sub{font-size:15px;color:#f4f1ea;background:rgba(28,27,26,.55);padding:6px 18px;border-radius:999px;letter-spacing:.1em}
+@keyframes winPop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.ov-card{position:relative;background:#f4f1ea;border-radius:6px;padding:34px 26px 24px;width:100%;max-width:340px;text-align:center;box-shadow:0 0 0 1px rgba(28,27,26,.35)}
+.ov-x{
+  position:absolute;top:10px;right:10px;width:34px;height:34px;
+  border:none;background:transparent;color:#7d766c;font-size:22px;line-height:1;
+  cursor:pointer;border-radius:4px;font-family:inherit;touch-action:manipulation;
+}
+.ov-x:active{background:#e0dcd2;color:#1c1b1a}
+.ov-title{font-size:26px;font-weight:700;letter-spacing:.08em}
+.ov-title.win{color:#30a46c}
+.ov-title.lose{color:#e5484d}
+.ov-data{font-size:14px;color:#7d766c;margin:12px 0 20px;font-family:ui-monospace,Consolas,Menlo,monospace;line-height:1.9}
+/* 结算星级（v0.5.0）：依次弹入 */
+.ov-stars{margin:16px 0 0;font-size:34px;letter-spacing:14px;text-indent:14px;line-height:1}
+.ov-stars .st-item{font-style:normal;display:inline-block}
+.ov-stars .on{color:#ffb224;text-shadow:0 2px 6px rgba(255,178,36,.45)}
+.ov-stars .off{color:#d9d3c7}
+@keyframes stPop{
+  0%{transform:scale(0) rotate(-30deg);opacity:0}
+  100%{transform:scale(1) rotate(0);opacity:1}
+}
+.ov-star-line{color:#8a8276;font-family:inherit}
+
+/* ---------- 轻提示（死局重排等） ---------- */
+#toast{
+  position:fixed;left:50%;bottom:36px;transform:translate(-50%,8px);
+  background:#1c1b1a;color:#f4f1ea;padding:10px 18px;border-radius:4px;
+  font-size:14px;opacity:0;pointer-events:none;z-index:60;
+  transition:opacity .2s ease,transform .2s ease;white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:360px){
+  .hud-val{font-size:16px}
+  .cover-title{font-size:30px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= 封面场景 ================= -->
+  <section id="scr-cover" class="screen on">
+    <div class="cover-shade"></div>
+    <div class="cover-bottom">
+      <div class="cover-swatches"><i></i><i></i><i></i><i></i><i></i></div>
+      <h1 class="cover-title">红玉的消消乐</h1>
+      <p class="cover-sub">6×6 色块三消 · 100 关闯关挑战</p>
+      <button id="btnStart" type="button" class="primary-btn">开始游戏</button>
+    </div>
+  </section>
+
+  <!-- ================= 关卡选择场景 ================= -->
+  <section id="scr-levels" class="screen">
+    <div class="map-head">
+      <span class="map-head-t">选择关卡</span>
+      <span class="map-head-stars"><i class="mh-star">★</i><b id="totalStars">0</b><span>/</span><span id="maxStars">300</span></span>
+    </div>
+    <div id="mapScroll">
+      <div id="mapTrail"></div>
+      <div id="levelList"></div>
+    </div>
+    <button id="backCover" type="button" class="ghost-btn">← 返回封面</button>
+  </section>
+
+  <!-- ================= 游戏场景 ================= -->
+  <section id="scr-game" class="screen">
+    <header class="hud">
+      <div class="hud-row">
+        <div><div class="hud-label">得分 SCORE</div><div class="hud-score" id="score">000000</div></div>
+        <div class="hud-combo" id="combo">×0</div>
+        <div style="text-align:right"><div class="hud-label">目标 TARGET</div><div class="hud-target-val" id="target">800</div></div>
+      </div>
+      <div class="hud-bar"><i id="hudBar"></i><em></em></div>
+      <div class="hud-row">
+        <div><div class="hud-label">倒计时 TIME</div><div class="hud-val" id="time">60</div></div>
+        <div><div class="hud-label">步数 MOVES</div><div class="hud-val" id="moves">12</div></div>
+        <div style="text-align:right"><div class="hud-label">关卡 LEVEL</div><div class="hud-val" id="lvnum">1/100</div></div>
+      </div>
+    </header>
+
+    <div class="hint">点选或滑动交换相邻色块 · 横竖三连消除 · 连击掉落炸弹</div>
+    <div id="boardWrap"><div id="board"></div></div>
+    <button id="restart" type="button" class="primary-btn">重新开始本关</button>
+  </section>
+
+</div>
+
+<div id="gameBg" aria-hidden="true"></div>
+<div id="winFlash" aria-hidden="true"><div class="win-big">通关成功！</div><div class="win-sub" id="winSub">太棒了 · 下一关已解锁</div></div>
+
+<!-- 胜利 / 失败结算浮层 -->
+<div id="overlay" class="ov hidden">
+  <div class="ov-card">
+    <button id="ovClose" type="button" class="ov-x" aria-label="关闭">✕</button>
+    <div class="ov-title" id="ovTitle">过关啦！</div>
+    <div class="ov-stars" id="ovStars" hidden><i>★</i><i>★</i><i>★</i></div>
+    <div class="ov-data" id="ovData"></div>
+    <button id="ovNext" type="button" class="primary-btn">进入下一关</button>
+    <button id="ovRetry" type="button" class="ghost-btn">再试一次</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<!-- 背景音乐：优先加载同目录 bgm.mp3（用户自备合法音源）；不存在时自动降级为内置合成旋律 -->
+<audio id="bgmFile" src="bgm.mp3" loop preload="auto"></audio>
+<!-- 游戏内背景音乐（与封面音乐分开） -->
+<audio id="bgmGame" src="beijing1.mp3" loop preload="auto"></audio>
+<!-- 消除 / 爆炸音效（用户音源，加载失败自动回退 Web Audio 合成音） -->
+<audio id="sfxClear" src="xiaochu2.mp3" preload="auto"></audio>
+<audio id="sfxBoom" src="boom3.mp3" preload="auto"></audio>
+<script>
+/* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
+   但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
+(function () {
+  var VER = '0.5.0';
+  try {
+    var seen = localStorage.getItem('hongyu_ver');
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.v && j.v !== seen) {
+          localStorage.setItem('hongyu_ver', j.v);
+          if (seen) location.reload();   // 首次记录不刷，已有旧记录且版本变了才强刷
+        }
+      })
+      .catch(function () {});
+  } catch (e) {}
+})();
+</script>
+
+<script>
+'use strict';
+/* ============================================================
+ * 红玉的消消乐 v0.2 —— 单文件原生 JS
+ * v0.1：交换 → 三连消除 → 下落补位 → 连锁（计分倍增）
+ * v0.2：封面 / 关卡选择 / 5 关闯关（倒计时+步数+目标分）
+ *       炸弹方块（连击掉落，3×3 爆炸）/ Web Audio 全套音效 / 进度存档
+ * ============================================================ */
+
+/* ---------------- 可调参数 ---------------- */
+const ROWS = 6;               // 棋盘行数
+const COLS = 6;               // 棋盘列数
+const COLOR_COUNT = 5;        // 颜色种类数（对应 f0~f4）
+const GAP = 6;                // 方块间距（px）
+const FRAME = 6;              // 方块与木框内沿的均匀间隙（四周一致，方块居中）
+const SWAP_MS = 150;          // 交换动画时长
+const CLEAR_MS = 200;         // 消除动画时长
+const FALL_MS = 250;          // 下落动画时长
+const SWIPE_THRESHOLD = 24;   // 滑动触发交换的位移阈值（px）
+const BASE_SCORE = 10;        // 每块基础分
+const SHARD_COUNT = 5;        // 每个方块破碎时的碎片数量
+const SHARD_MS = 420;         // 碎片飞散动画时长（ms）
+const TREMBLE_MS = 200;       // 待消除抖动预告时长（ms），与 .face.shake 动画时长保持一致
+const COLOR_HEX = ['#e5484d','#ffb224','#30a46c','#0091ff','#8e4ec6']; // 与 .f0~.f4 一一对应
+const BOMB_DROP_CHANCE = 0.25; // 连击波（第2波起）补位新块生成炸弹的概率
+const TIME_LOW = 5;            // 倒计时剩余 ≤ 此值时红色告警
+
+/* ---------------- 关卡配置（用户定稿 v0.2.5 三维锚点） ----------------
+ * 共 100 关，三维度各自锚点线性插值：
+ *   倒计时：L1=60s → L40=120s → L100=300s（单局≤5分钟硬约束 ✓）
+ *   步数　：L1=12 → L10=25 封顶（恒 ≤100 ✓）
+ *   目标分：L1=250 → L30=3,000 → L60=5,000 → L100=6,500 登顶（选项二·可达终点）
+ * 锚点与设计稿 docs/difficulty-design-v3.html 同源（calc3.js）。 */
+const LEVEL_COUNT = 100;
+const lvInterp = (anchors, n, round) => {
+  if (n <= anchors[0][0]) return anchors[0][1];
+  for (let k = 1; k < anchors.length; k++) {
+    const [n1, v1] = anchors[k - 1], [n2, v2] = anchors[k];
+    if (n <= n2) return round(v1 + (v2 - v1) * (n - n1) / (n2 - n1));
+  }
+  return anchors[anchors.length - 1][1];
+};
+const rInt = (x) => Math.round(x);
+const r5 = (x) => Math.round(x / 5) * 5;
+const T_ANCHORS = [[1, 60], [10, 60], [40, 120], [100, 300]];       // 倒计时锚点
+const M_ANCHORS = [[1, 12], [10, 25]];                              // 步数锚点（封顶 25）
+const S_ANCHORS = [[1, 250], [30, 3000], [60, 5000], [100, 6500]];  // 目标分锚点
+const LEVELS = Array.from({ length: LEVEL_COUNT }, (_, i) => ({
+  time: lvInterp(T_ANCHORS, i + 1, rInt),
+  moves: lvInterp(M_ANCHORS, i + 1, rInt),
+  target: lvInterp(S_ANCHORS, i + 1, r5),
+}));
+
+/* ---------------- 游戏状态 ---------------- */
+let grid = [];        // grid[r][c] = 方块对象 {color, special, r, c, el, face}；special='bomb' 为炸弹
+let score = 0;        // 当前关得分
+let lock = false;     // 动画锁：消除/下落动画期间屏蔽输入
+let selected = null;  // 点选模式下当前选中的方块
+let gesture = null;   // 进行中的触摸手势 {tile, x, y, handled, id}
+let gen = 0;          // 局代号：重开时 +1，用于中止进行中的异步结算流程
+let tileSize = 0;     // 单个方块边长（px），由 layout() 按屏宽计算
+
+/* ---------------- 关卡进度状态 ---------------- */
+let progress = { unlocked: 1, stars: {} };  // 已解锁关数 + 每关星级（stars[关卡号1-based]=1~3），localStorage 持久化
+let curLevel = 0;                // 当前关（0-based）
+let timeLeft = 0;                // 剩余秒数
+let movesLeft = 0;               // 剩余步数
+let timeUp = false;              // 时间到标记（结算完成后判定失败用）
+let levelOver = false;           // 本关已结束（胜利/失败后锁输入）
+let timerId = null;              // 倒计时定时器
+let starsEarned = 0;             // 本关获得星级（endLevel 胜利时算出，供结算浮层展示）
+
+/* ---------------- DOM 引用 ---------------- */
+const $ = (id) => document.getElementById(id);
+const board = $('board');
+const scoreEl = $('score'), targetEl = $('target'), comboEl = $('combo');
+const timeEl = $('time'), movesEl = $('moves'), lvnumEl = $('lvnum');
+const hudBarEl = $('hudBar');
+const toastEl = $('toast');
+const overlay = $('overlay'), ovTitle = $('ovTitle'), ovData = $('ovData');
+const ovStars = $('ovStars');    // 结算浮层星级容器（v0.5.0）
+const ovNext = $('ovNext'), ovRetry = $('ovRetry'), ovClose = $('ovClose');
+const levelList = $('levelList');
+const bgmAudio = $('bgmFile');
+const bgmGameAudio = $('bgmGame');    // 游戏内 BGM（beijing1，循环）
+const sfxClearAudio = $('sfxClear');  // 消除音效（xiaochu2）
+const sfxBoomAudio = $('sfxBoom');    // 爆炸音效（boom3）
+const gameBg = $('gameBg');
+const winFlash = $('winFlash');
+const winSub = $('winSub');
+
+/* ---------------- 小工具 ---------------- */
+const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+const randColor = () => Math.floor(Math.random() * COLOR_COUNT);
+const step = () => tileSize + GAP;   // 一个格子的总步长 = 块边长 + 间距
+
+function forEachTile(fn) {
+  if (!grid.length) return;   // 棋盘未初始化时（如首屏 resize 触发 layout）直接跳过
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (grid[r] && grid[r][c]) fn(grid[r][c]);
+}
+
+/* ============================================================
+ * 一、音效引擎（Web Audio 全合成，无外部文件；iOS 需手势后 resume）
+ * ============================================================ */
+let actx = null;          // AudioContext，首次用户手势时创建
+let bgmTimer = null;      // 合成 BGM 音序器
+const BGM_STEP_MS = 340;  // BGM 每步时长
+/* 关卡背景池：每关随机一张（bg1~bg5.jpg） */
+const BG_COUNT = 5;
+/* 背景预加载：进关卡列表时就用 Image 对象拉取全部 5 张，
+   浏览器会缓存，之后每关切换背景零等待、不闪加载 */
+const bgCache = [];
+let bgPool = [];        // 背景洗牌池：打乱后依次消费，用完重洗
+let lastBg = 0;         // 上一关用过的背景编号（防相邻重复）
+function preloadBackgrounds() {
+  if (bgCache.length) return;              // 只预加载一次
+  for (let i = 1; i <= BG_COUNT; i++) {
+    const img = new Image();
+    img.src = 'bg' + i + '.jpg';
+    bgCache.push(img);                     // 持有引用，防垃圾回收清掉缓存
+  }
+}
+const BGM_MELODY = [      // 原创轻快旋律（A 大调五声音阶，度数，-1 为休止）
+  0,4,7,9, 7,4,2,4,   0,4,7,9, 12,9,7,4,
+  2,5,9,12, 9,5,2,5,  4,7,12,14, 12,7,4,2,
+];
+
+function initAudio() {
+  if (!actx) {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume();
+}
+
+/* 单音：freq 频率 / dur 秒 / type 波形 / vol 音量 / delay 相对当前延迟秒 */
+function beep(freq, dur, type, vol, delay) {
+  if (!actx) return;
+  const t0 = actx.currentTime + (delay || 0);
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type || 'sine';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.12, t0);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  o.connect(g).connect(actx.destination);
+  o.start(t0); o.stop(t0 + dur + 0.05);
+}
+
+/* 爆炸低频噪声：白噪声 buffer + 快速衰减 + 低频震荡 */
+function boomSound() {
+  if (!actx) return;
+  const dur = 0.35, sr = actx.sampleRate;
+  const buf = actx.createBuffer(1, sr * dur, sr);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+  const src = actx.createBufferSource(); src.buffer = buf;
+  const g = actx.createGain(); g.gain.value = 0.4;
+  const o = actx.createOscillator(); o.type = 'sine'; o.frequency.value = 70;
+  const og = actx.createGain(); og.gain.setValueAtTime(0.5, actx.currentTime);
+  og.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+  src.connect(g).connect(actx.destination);
+  o.connect(og).connect(actx.destination);
+  src.start(); o.start(); o.stop(actx.currentTime + dur);
+}
+
+/* 音效播放：用户音源优先，未就绪/失败时回退合成音（replay 为回退函数）。
+   currentTime 归零实现连发重叠。 */
+function playSfx(el, replay) {
+  try {
+    if (el.readyState >= 2) { el.currentTime = 0; el.volume = 0.7; el.play().catch(() => replay()); return; }
+  } catch (e) {}
+  replay();
+}
+
+
+/* 消除人声音效池：按食物类型叠加播放（在通用消除音之上）。
+   对应关系：火锅=配油碟 · 柠檬茶=丘大叔 · 榴莲=我的最爱 · 牛肉面=好吃 · 螺蛳粉=味道不错 */
+const VOICE_SFX = {
+0: 'voice-noodle.mp3',   // f0 红 · 牛肉面
+1: 'voice-luosi.mp3',    // f1 琥珀 · 螺蛳粉
+2: 'voice-lemon.mp3',    // f2 绿 · 柠檬茶
+3: 'voice-durian.mp3',   // f3 蓝 · 榴莲
+4: 'voice-hotpot.mp3',   // f4 紫 · 火锅
+};
+const voiceEls = {};      // audio 元素池（懒创建，避免预载阻塞）
+let voiceWin = null, voiceFail = null;   // 胜负人声（懒创建）
+function playVoiceLine(file) {
+  let el = voiceEls[file];
+  if (!el) { el = new Audio(file); el.volume = 0.85; voiceEls[file] = el; }
+  try { el.currentTime = 0; el.play().catch(() => {}); } catch (e) {}
+}
+/* 人声节流（用户定稿）：连续消除时只播第一波，1 秒内的后续波次全部静默；
+   levelOver（通关前的最后消除）不播人声 */
+let lastVoiceAt = 0;
+function playVoiceOnce(matches) {
+  if (levelOver) return;                               // 通关消除不播人声
+  const now = Date.now();
+  if (now - lastVoiceAt < 1000) return;                // 1 秒内连续消除：只保留第一波的人声
+  lastVoiceAt = now;
+  const arr = [...matches];
+  const pick = arr[Math.floor(Math.random() * arr.length)];
+  playVoiceSfx(pick.color);
+}
+
+function playVoiceSfx(color) {
+  const src = VOICE_SFX[color];
+  if (!src) return;
+  let el = voiceEls[src];
+  if (!el) { el = new Audio(src); el.volume = 0.75; voiceEls[src] = el; }
+  try { el.currentTime = 0; el.play().catch(() => {}); } catch (e) {}
+}
+const sfx = {
+  tap:   () => beep(620, 0.05, 'sine', 0.10),                                    // 点选
+  swap:  () => { beep(380, 0.07, 'triangle', 0.10); beep(500, 0.06, 'triangle', 0.08, 0.05); }, // 交换
+  clear: (w) => playSfx(sfxClearAudio, () => { const base = 480 + Math.min(w, 4) * 60; beep(base, 0.09, 'sine', 0.12); beep(base * 1.25, 0.10, 'sine', 0.10, 0.06); }), // 消除：xiaochu2
+  boom:  () => playSfx(sfxBoomAudio, () => boomSound()),                                                                          // 爆炸：boom3
+  win:   () => { [523, 659, 784, 1047].forEach((f, i) => beep(f, 0.16, 'triangle', 0.14, i * 0.12)); }, // 胜利琶音
+  fail:  () => { beep(392, 0.22, 'sine', 0.14); beep(262, 0.4, 'sine', 0.14, 0.2); },                    // 失败下行
+};
+
+/* 背景音乐：封面/菜单用 bgm.mp3，游戏内用 bgm-game.mp3（均为用户自备音源）。
+   任一加载失败或被自动播放策略拦截时，自动切内置合成旋律兜底。 */
+function playAudioBgm(el) {
+  stopBgm();
+  el.volume = 0.35;
+  try { el.currentTime = 0; } catch (e) {}
+  const p = el.play();
+  if (p) p.catch(() => startSynthBgm());   // 无文件/自动播放被拒 → 合成兜底
+  else startSynthBgm();
+}
+const playMenuBgm = () => playAudioBgm(bgmAudio);      // 封面/关卡选择
+const playGameBgm = () => playAudioBgm(bgmGameAudio);  // 游戏进行中
+function startSynthBgm() {
+  if (bgmTimer || !actx) return;
+  let stepIdx = 0;
+  bgmTimer = setInterval(() => {
+    if (!actx) return;
+    const deg = BGM_MELODY[stepIdx % BGM_MELODY.length];
+    if (deg >= 0) beep(220 * Math.pow(2, deg / 12), 0.28, 'triangle', 0.045);       // 主旋律
+    if (stepIdx % 4 === 0) beep(110 * Math.pow(2, deg / 12), 0.6, 'sine', 0.035);   // 低音铺底
+    stepIdx++;
+  }, BGM_STEP_MS);
+}
+function stopBgm() {
+  if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; }
+  bgmAudio.__playing = false; bgmGameAudio.__playing = false;
+  try { bgmAudio.pause(); } catch (e) {}
+  try { bgmGameAudio.pause(); } catch (e) {}
+}
+
+/* 震动反馈：手机 navigator.vibrate + 桌面棋盘 CSS 抖动双保险 */
+function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+function shakeBoard() {
+  board.classList.remove('quake');
+  void board.offsetWidth;              // 重置动画
+  board.classList.add('quake');
+  setTimeout(() => board.classList.remove('quake'), 360);
+}
+
+/* ============================================================
+ * 二、进度存档（localStorage，微信/file:// 均可用；防御性 try/catch）
+ * ============================================================ */
+const SAVE_KEY = 'hongyu_match3_progress_v1';
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p && p.unlocked >= 1) {
+        progress.unlocked = Math.min(LEVEL_COUNT, Math.max(1, p.unlocked));
+        /* 星级存档兼容：旧档无 stars 字段自动补空表；只收 1~100 关的合法值（1~3 星） */
+        if (p.stars && typeof p.stars === 'object') {
+          for (let k = 1; k <= LEVEL_COUNT; k++) {
+            const v = p.stars[k] | 0;
+            if (v >= 1 && v <= 3) progress.stars[k] = v;
+          }
+        }
+      }
+    }
+  } catch (e) {}
+}
+function saveProgress() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); } catch (e) {}
+}
+
+/* ============================================================
+ * 二·五、星级系统（v0.5.0）：通关条件不变，星评「打得多高效」
+ *   ★1 = 达到目标分通关
+ *   ★2 = 通关时剩余步数 ≥ 总步数 × 25%
+ *   ★3 = 通关时剩余步数 ≥ 总步数 × 50%
+ * 时间不参与星级（倒计时是思考预算，惩罚稳健玩家不合理）。
+ * 星级只升不降：重打已通关卡取历史最高。 */
+const STAR2_RATIO = 0.25, STAR3_RATIO = 0.5;
+function calcStars(left) {
+  const total = LEVELS[curLevel].moves;
+  if (left >= total * STAR3_RATIO) return 3;
+  if (left >= total * STAR2_RATIO) return 2;
+  return 1;
+}
+/* 记录本关星级（只升不降），返回是否刷新纪录 */
+function recordStars(s) {
+  const key = curLevel + 1;
+  const old = progress.stars[key] | 0;
+  if (s > old) { progress.stars[key] = s; return true; }
+  return false;
+}
+/* 全图总星数（列表顶部 ★N/300） */
+function totalStars() {
+  let sum = 0;
+  for (const k in progress.stars) sum += progress.stars[k] | 0;
+  return sum;
+}
+
+/* ============================================================
+ * 三、场景切换与关卡选择界面
+ * ============================================================ */
+function showScreen(name) {
+  ['cover', 'levels', 'game'].forEach((s) => $('scr-' + s).classList.toggle('on', s === name));
+}
+
+/* 渲染关卡地图（v0.5.0 重写）：竖向闯关小径 + 左右交错节点。
+ * 节点三态：已通关=红色渐变圆+星级挂载下方；当前关=白底红圈放大+脉冲+行动胶囊；未解锁=灰底锁。
+ * 顶部总星数条 ★N/300；打开自动定位到当前关。 */
+function renderLevels() {
+  $('totalStars').textContent = totalStars();
+  $('maxStars').textContent = LEVELS.length * 3;
+  levelList.innerHTML = '';
+  let curNode = null;
+  LEVELS.forEach((lv, i) => {
+    const num = i + 1;
+    const unlocked = num <= progress.unlocked;
+    const cleared = num < progress.unlocked;      // 解锁数大于本关序号 = 已通关
+    const cur = num === progress.unlocked;        // 当前待攻关（最高解锁且未显示已通关的第 100 关可重打刷星）
+    const node = document.createElement('button');
+    node.type = 'button';
+    node.className = 'lv-node' + (cleared ? ' done' : '') + (cur ? ' cur' : '') + (!unlocked ? ' lock' : '');
+    /* 左右交错挂在中央小径两侧（参考藤蔓闯关图的空间结构） */
+    node.style.alignSelf = (i % 2 === 0) ? 'flex-start' : 'flex-end';
+    if (i % 2 === 0) node.style.marginLeft = '17%'; else node.style.marginRight = '17%';
+    let inner = '<span class="node-lv">第 ' + num + ' 关</span><span class="node-num">' + num + '</span>';
+    if (cleared) {
+      const st = progress.stars[num] | 0;
+      let stars = '';
+      for (let s = 1; s <= 3; s++) stars += '<i class="' + (s <= st ? 'on' : 'off') + '">★</i>';
+      inner += '<span class="node-stars">' + stars + '</span>';
+    }
+    if (cur) inner += '<span class="go">闯第 ' + num + ' 关</span>';
+    if (!unlocked) inner += '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="1.5" fill="currentColor"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
+    node.innerHTML = inner;
+    if (unlocked) node.addEventListener('click', () => { initAudio(); preloadBackgrounds(); startLevel(i); });
+    levelList.appendChild(node);
+    if (cur) curNode = node;
+  });
+  /* 自动定位：当前关滚到视口上 1/3 处。
+   * rAF + setTimeout 双保险：页面被遮挡（微信 WebView 切后台等）时 rAF 可能被丢弃不触发 */
+  const scrollToCur = () => {
+    const sc = $('mapScroll');
+    if (!sc) return;
+    if (curNode) sc.scrollTop = Math.max(0, curNode.offsetTop - sc.clientHeight * 0.35);
+    else sc.scrollTop = sc.scrollHeight;   // 全图通关：滚到底部
+  };
+  requestAnimationFrame(scrollToCur);
+  setTimeout(scrollToCur, 160);
+}
+
+/* ============================================================
+ * 四、关卡流程：开始 / 倒计时 / 胜负判定 / 结算浮层
+ * ============================================================ */
+function startLevel(idx) {
+  curLevel = idx;
+  const lv = LEVELS[idx];
+  timeLeft = lv.time; movesLeft = lv.moves;
+  score = 0; timeUp = false; levelOver = false;
+  overlay.classList.add('hidden');
+  /* 背景洗牌池：打乱 5 张依次用完再重洗，保证相邻关卡必不重复 */
+  if (!bgPool.length) {
+    bgPool = Array.from({ length: BG_COUNT }, (_, k) => k + 1);
+    for (let k = bgPool.length - 1; k > 0; k--) {
+      const r = Math.floor(Math.random() * (k + 1));
+      [bgPool[k], bgPool[r]] = [bgPool[r], bgPool[k]];
+    }
+    /* 重洗后若新池首张与上一关同图，与池内另一张交换避免接缝重复 */
+    if (bgPool[0] === lastBg && bgPool.length > 1) [bgPool[0], bgPool[1]] = [bgPool[1], bgPool[0]];
+  }
+  const bgIdx = bgPool.shift();
+  lastBg = bgIdx;
+  gameBg.style.backgroundImage = 'url(bg' + bgIdx + '.jpg)';
+  board.classList.remove('hide-tiles');
+  showScreen('game');
+  updateHud();
+  gen++;                 // 局代号 +1：中止旧局进行中的异步结算
+  lock = false; gesture = null;
+  clearSelection();
+  board.innerHTML = '';
+  buildBoard();
+
+  stopTimer();
+  timerId = setInterval(tick, 1000);
+  initAudio();
+  playGameBgm();   // 游戏内 BGM：烟花易冷
+}
+function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+
+/* 每秒 tick：倒计时归零后标记 timeUp；若不在结算锁中立即判定，否则等结算完判 */
+function tick() {
+  if (levelOver) return;
+  timeLeft = Math.max(0, timeLeft - 1);
+  updateHud();
+  if (timeLeft === 0) {
+    timeUp = true;
+    if (!lock) judgeEnd();
+  }
+}
+
+/* 胜负判定（结算循环每波末尾 / 时间到时调用）：达标→胜；时间尽或步尽→负 */
+function judgeEnd() {
+  if (levelOver) return;
+  if (score >= LEVELS[curLevel].target) { endLevel(true); return; }
+  if (timeUp || movesLeft <= 0) endLevel(false);
+}
+
+function endLevel(win) {
+  levelOver = true;
+  stopTimer();
+  stopBgm();           // 停掉游戏内 BGM，让胜利/失败音效清晰响完
+  clearSelection();
+  if (win) {
+    /* 通关庆祝：隐藏全部方块 3 秒，显示大字庆祝，再弹结算浮层 */
+    board.classList.add('hide-tiles');
+    winSub.textContent = (curLevel + 1 < LEVELS.length) ? '太棒了 · 第 ' + (curLevel + 2) + ' 关已解锁' : '100 关全部通关 · 你是传说！';
+    winFlash.classList.remove('on');
+    void winFlash.offsetWidth;              // 重启动画
+    winFlash.classList.add('on');
+    setTimeout(() => {
+      winFlash.classList.remove('on');
+      showOverlay(true);
+    }, 3000);
+    sfx.win();
+    playVoiceLine('voice-win.mp3');    // 人声「完美」叠加在胜利琶音上
+    progress.unlocked = Math.max(progress.unlocked, Math.min(LEVELS.length, curLevel + 2)); // 解锁下一关（上限 100）
+    starsEarned = calcStars(movesLeft);   // 星级：按通关剩余步数划档（25%/50%）
+    recordStars(starsEarned);             // 只升不降写入存档
+    saveProgress();
+  } else {
+    sfx.fail();
+    playVoiceLine('voice-fail.mp3');   // 人声「差一点」叠加在失败音上
+    showOverlay(false);
+  }
+}
+
+/* 结算浮层：右上角 ✕ 关闭回关卡选择；下方按钮按胜负显示 */
+function showOverlay(win) {
+  const lv = LEVELS[curLevel];
+  const finalWin = win && curLevel === LEVELS.length - 1;   // 第 100 关胜利 = 全部通关
+  ovTitle.textContent = finalWin ? '全部通关！' : (win ? '过关啦！' : '差一点点');
+  ovTitle.className = 'ov-title ' + (win ? 'win' : 'lose');
+  ovData.innerHTML = '第 ' + (curLevel + 1) + ' 关 · 得分 ' + score + ' / 目标 ' + lv.target +
+    '<br>剩余 ' + timeLeft + ' 秒 · 剩余 ' + movesLeft + ' 步';
+  /* 星级揭示（v0.5.0）：依次弹入，未得的灰星占位；失败不显示 */
+  if (win) {
+    ovStars.hidden = false;
+    ovStars.querySelectorAll('i').forEach((el, i) => {
+      el.className = 'st-item ' + (i < starsEarned ? 'on' : 'off');
+      el.style.animation = 'none';
+      void el.offsetWidth;   // 重启动画
+      el.style.animation = 'stPop .34s cubic-bezier(.34,1.56,.64,1) ' + (0.35 + i * 0.28).toFixed(2) + 's both';
+    });
+    ovData.insertAdjacentHTML('beforeend', '<br><span class="ov-star-line">' +
+      (starsEarned >= 3 ? '大师通关 · 剩余步数过半' : starsEarned === 2 ? '高效通关 · 剩余步数 ≥ 25%' : '达标通关 · 再省步数可升星') +
+      '</span>');
+  } else {
+    ovStars.hidden = true;
+  }
+  const hasNext = win && curLevel + 1 < LEVELS.length;
+  ovNext.style.display = hasNext ? '' : 'none';
+  ovNext.textContent = hasNext ? '进入下一关（第 ' + (curLevel + 2) + ' 关）' : '进入下一关';
+  ovRetry.style.display = win ? 'none' : '';
+  overlay.classList.remove('hidden');
+}
+
+/* ============================================================
+ * 五、棋盘构建与布局
+ * ============================================================ */
+
+/* 创建方块：外层 .tile 负责定位，内层 .face 负责颜色与效果动画 */
+function createTile(color, r, c) {
+  const el = document.createElement('div');
+  el.className = 'tile';
+  el.style.width = tileSize + 'px';
+  el.style.height = tileSize + 'px';
+  const face = document.createElement('div');
+  face.className = 'face f' + color;
+  el.appendChild(face);
+  const t = { color, special: null, r, c, el, face };
+  el.__tile = t;            // 事件委托时反查方块对象
+  board.appendChild(el);
+  return t;
+}
+
+/* 给方块挂上炸弹外观（special='bomb' 已设置后调用） */
+function markBomb(t) {
+  t.face.classList.add('bomb');
+}
+
+/* 按扫描顺序选一个"不与左边两个/上边两个同色"的颜色，保证初始无现成三连 */
+function pickSafeColor(r, c) {
+  const banned = new Set();
+  if (c >= 2) {
+    const a = grid[r][c - 1].color, b = grid[r][c - 2].color;
+    if (a === b) banned.add(a);
+  }
+  if (r >= 2) {
+    const a = grid[r - 1][c].color, b = grid[r - 2][c].color;
+    if (a === b) banned.add(a);
+  }
+  const pool = [];
+  for (let i = 0; i < COLOR_COUNT; i++) if (!banned.has(i)) pool.push(i);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/* 按屏宽计算方块尺寸并落位（旋转/缩放窗口时也会重新调用） */
+function layout() {
+  const w = (board.parentElement && board.parentElement.clientWidth) || 320;
+  /* 整体缩放系数 0.90（用户定稿）
+     尺寸构成：边框 4×2 + 均匀间隙 FRAME×2 + 内容区，方块在框内四边等距居中 */
+  const SCALE = 0.90;
+  const BORDER_W = 4;
+  tileSize = Math.floor(((w * SCALE) - BORDER_W * 2 - FRAME * 2 - GAP * (COLS - 1)) / COLS);
+  const contentSize = tileSize * COLS + GAP * (COLS - 1);       // 内容区（不含框与间隙）
+  const boardSize = BORDER_W * 2 + FRAME * 2 + contentSize;     // 边框到边框的总尺寸
+  board.style.width = boardSize + 'px';
+  board.style.height = boardSize + 'px';
+  forEachTile((t) => {
+    t.el.style.width = tileSize + 'px';
+    t.el.style.height = tileSize + 'px';
+    placeTile(t, 0);
+  });
+}
+
+/* 把方块摆到它数据坐标 (r,c) 对应的像素位置；ms 为过渡时长 */
+function placeTile(t, ms) {
+  t.el.style.transitionDuration = ms + 'ms';
+  t.el.style.transform = 'translate(' + (FRAME + t.c * step()) + 'px,' + (FRAME + t.r * step()) + 'px)';
+}
+
+/* 统一刷新全部方块位置（带过渡动画） */
+function positionTiles(ms) {
+  forEachTile((t) => placeTile(t, ms));
+}
+
+/* 强制浏览器立即计算布局：让"新方块的初始负位置"先生效，再播放下落动画 */
+function reflow() { board.offsetHeight; }
+
+/* 构建新棋盘：逐格生成无三连的局面，并保证至少存在一组可行交换 */
+function buildBoard() {
+  grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      grid[r][c] = createTile(pickSafeColor(r, c), r, c);
+
+  /* 兜底：极端概率下无解则重排（理论上 5 色 6x6 几乎不会发生） */
+  let guard = 0;
+  while (!hasAnyMove() && guard++ < 50) rerollColors();
+
+  layout();
+
+  /* 入场动画：按对角线次序依次弹出 */
+  forEachTile((t) => {
+    t.face.style.animationDelay = ((t.r + t.c) * 18) + 'ms';
+    t.face.classList.add('pop');
+  });
+}
+
+/* ============================================================
+ * 六、消除检测 / 炸弹扩散 / 死局检测 / 重排
+ * ============================================================ */
+
+/* 扫描全盘，返回所有"三连及以上"方块对象组成的 Set（横竖交叉自动去重） */
+function findMatches() {
+  const out = new Set();
+  /* 横向扫描：统计每一段连续同色的长度 */
+  for (let r = 0; r < ROWS; r++) {
+    let run = 1;
+    for (let c = 1; c <= COLS; c++) {
+      const same = c < COLS && grid[r][c].color === grid[r][c - 1].color;
+      if (same) { run++; continue; }
+      if (run >= 3) for (let k = c - run; k < c; k++) out.add(grid[r][k]);
+      run = 1;
+    }
+  }
+  /* 纵向扫描：同理 */
+  for (let c = 0; c < COLS; c++) {
+    let run = 1;
+    for (let r = 1; r <= ROWS; r++) {
+      const same = r < ROWS && grid[r][c].color === grid[r - 1][c].color;
+      if (same) { run++; continue; }
+      if (run >= 3) for (let k = r - run; k < r; k++) out.add(grid[k][c]);
+      run = 1;
+    }
+  }
+  return out;
+}
+
+/* 炸弹扩散：消除集合中含炸弹时，把以其为中心的 3×3 全部并入；被炸到的炸弹连锁爆炸（BFS） */
+function expandBombs(matched) {
+  const seen = new Set(matched);
+  const queue = [...matched];
+  let hadBomb = false;
+  while (queue.length) {
+    const t = queue.pop();
+    if (t.special !== 'bomb') continue;
+    hadBomb = true;
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        const r = t.r + dr, c = t.c + dc;
+        if (r < 0 || r >= ROWS || c < 0 || c >= COLS) continue;
+        const n = grid[r][c];
+        if (n && !seen.has(n)) { seen.add(n); queue.push(n); }
+      }
+    }
+  }
+  return { set: seen, hadBomb };
+}
+
+/* 纯数据层面交换两格颜色（死局检测用，不动 DOM） */
+function swapColorData(r1, c1, r2, c2) {
+  const t = grid[r1][c1].color;
+  grid[r1][c1].color = grid[r2][c2].color;
+  grid[r2][c2].color = t;
+}
+
+/* 全盘是否存在至少一组能产生消除的相邻交换（死局检测） */
+function hasAnyMove() {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (c + 1 < COLS) {                      /* 试与右邻交换 */
+        swapColorData(r, c, r, c + 1);
+        const hit = findMatches().size > 0;
+        swapColorData(r, c, r, c + 1);
+        if (hit) return true;
+      }
+      if (r + 1 < ROWS) {                      /* 试与下邻交换 */
+        swapColorData(r, c, r + 1, c);
+        const hit = findMatches().size > 0;
+        swapColorData(r, c, r + 1, c);
+        if (hit) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/* 死局重排：方块位置不动，按扫描序重新发色（无现成三连 + 有解），并弹出提示 */
+function rerollColors() {
+  let guard = 0;
+  do {
+    forEachTile((t) => {
+      t.color = pickSafeColor(t.r, t.c);
+      t.face.className = 'face f' + t.color + (t.special === 'bomb' ? ' bomb' : '');
+    });
+  } while (!hasAnyMove() && ++guard < 50);
+  /* 视觉反馈：全部方块重新弹出一次 */
+  forEachTile((t) => {
+    t.face.style.animationDelay = ((t.r + t.c) * 14) + 'ms';
+    t.face.classList.add('pop');
+  });
+}
+
+/* ============================================================
+ * 七、交换主流程（含消除 → 下落 → 连锁结算 → 胜负判定）
+ * ============================================================ */
+
+/* 真实交换两个方块：互换 grid 引用并交换坐标 */
+function swapTiles(a, b) {
+  grid[a.r][a.c] = b;
+  grid[b.r][b.c] = a;
+  const tr = a.r, tc = a.c;
+  a.r = b.r; a.c = b.c;
+  b.r = tr; b.c = tc;
+}
+
+/* 待消除预告：给 face 挂抖动动画类 */
+function trembleFace(t) {
+  t.face.classList.add('shake');
+}
+
+/* 消除动画：抖动结束后 face 缩放至消失（外层位置不动） */
+function clearFace(t) {
+  t.face.classList.remove('shake');   // 先摘掉动画类，避免动画覆盖内联 transform
+  t.face.style.transform = 'scale(0)';
+  t.face.style.opacity = '0';
+}
+
+/* 破碎特效：在方块原位生成同色碎片，向外飞散 + 旋转 + 淡出。
+   碎片是独立 DOM 节点，不参与棋盘数据，消除/下落流程无需等待它结束。 */
+/* 飞行图标：消除时从方块位置飞向得分面板，飞行中逐渐缩小。
+   独立 fixed 定位节点，WAAPI 驱动，不阻塞结算时序。 */
+function flyToScore(t) {
+  const tileRect = t.el.getBoundingClientRect();
+  const scoreRect = scoreEl.getBoundingClientRect();
+  const startX = tileRect.x + tileRect.width / 2;
+  const startY = tileRect.y + tileRect.height / 2;
+  const endX = scoreRect.x + scoreRect.width / 2;
+  const endY = scoreRect.y + scoreRect.height / 2;
+  const el = document.createElement('div');
+  el.className = 'fly-icon';
+  const size = Math.round(tileSize * 0.74);                       // 起始大小 = 方块内图标实际大小
+  el.style.width = size + 'px';
+  el.style.height = size + 'px';
+  /* 图标源兜底：face 内联样式残留时 computed --icon 仍可靠；为空则跳过飞行 */
+  const iconVar = getComputedStyle(t.face).getPropertyValue('--icon');
+  if (!iconVar || !iconVar.trim()) return;
+  el.style.left = (startX - size / 2) + 'px';
+  el.style.top = (startY - size / 2) + 'px';
+  document.body.appendChild(el);
+  const dx = endX - startX, dy = endY - startY;
+  const anim = el.animate([
+    { transform: 'translate(0,0) scale(1)', opacity: 1 },
+    { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(1)', opacity: 1 },
+  ], { duration: 800, easing: 'cubic-bezier(.4,.1,.4,1)', fill: 'forwards' });
+  anim.onfinish = () => {
+    el.remove();
+    scoreEl.classList.add('score-pulse');          // 到达：得分数字脉冲一下
+    setTimeout(() => scoreEl.classList.remove('score-pulse'), 340);
+  };
+}
+
+function shatter(t) {
+  for (let i = 0; i < SHARD_COUNT; i++) {
+    const s = document.createElement('div');
+    s.className = 'shard';
+    const size = Math.round(tileSize * (0.22 + Math.random() * 0.16));      // 碎片大小随机
+    const cx = FRAME + t.c * step() + tileSize / 2;                          // 方块中心（含木框偏移）
+    const cy = FRAME + t.r * step() + tileSize / 2;
+    const angle = (i / SHARD_COUNT) * Math.PI * 2 + (Math.random() - 0.5);  // 均匀角度 + 随机抖动
+    const dist = tileSize * (0.7 + Math.random() * 0.8);                    // 飞散距离随机
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.background = COLOR_HEX[t.color];                                // 与被消方块同色
+    s.style.left = Math.round(cx - size / 2) + 'px';
+    s.style.top = Math.round(cy - size / 2) + 'px';
+    s.style.setProperty('--dx', Math.round(Math.cos(angle) * dist) + 'px');
+    s.style.setProperty('--dy', Math.round(Math.sin(angle) * dist + tileSize * 0.25) + 'px'); // 向下偏移模拟重力
+    s.style.setProperty('--rot', Math.round((Math.random() - 0.5) * 300) + 'deg');
+    board.appendChild(s);
+    setTimeout(() => s.remove(), SHARD_MS + 80);   // 动画结束后清理，避免节点残留
+  }
+}
+
+/* 从棋盘移除方块（数据 + DOM） */
+function removeTile(t) {
+  grid[t.r][t.c] = null;
+  t.el.remove();
+}
+
+/* 重力下落：每列自底向上压实；顶部空位生成新方块并摆在棋盘上方准备落入。
+   allowBomb：连击波（第 2 波起）补位新块按概率生成炸弹。 */
+function applyGravity(allowBomb) {
+  for (let c = 0; c < COLS; c++) {
+    let write = ROWS - 1;                        // 本列下一个落位行（自底向上）
+    for (let r = ROWS - 1; r >= 0; r--) {
+      const t = grid[r][c];
+      if (!t) continue;
+      if (write !== r) {                         // 整体下移到 write 行
+        grid[write][c] = t;
+        grid[r][c] = null;
+        t.r = write;
+      }
+      write--;
+    }
+    /* 顶部剩余空位全部生成新方块；初始 y 为负值（棋盘上方），随后落入 */
+    const spawnCount = write + 1;
+    for (let r = write; r >= 0; r--) {
+      const t = createTile(randColor(), r, c);
+      if (allowBomb && Math.random() < BOMB_DROP_CHANCE) { t.special = 'bomb'; markBomb(t); }
+      /* 复用防御：新块落位前清掉可能残留的内联透明度/缩放与 pop 类（gen 竞态路径） */
+  t.face.classList.remove('pop', 'shake');
+  t.face.style.transform = '';
+  t.face.style.opacity = '';
+  t.el.style.transitionDuration = '0ms';
+      t.el.style.transform =
+        'translate(' + (FRAME + c * step()) + 'px,' + (FRAME + (r - spawnCount) * step()) + 'px)';
+      grid[r][c] = t;
+    }
+  }
+}
+
+/* 交换主流程：swap → (无效则回弹) → 循环【消除 → 计分 → 下落】 → 死局检测 → 胜负判定 */
+async function trySwap(a, b) {
+  if (lock || levelOver || !a || !b) return;
+  lock = true;
+  clearSelection();
+  hideCombo();
+  const myGen = gen;                 // 记录局代号，期间重开会中止本流程
+
+  /* 1. 执行交换并播放动画 */
+  swapTiles(a, b);
+  sfx.swap();
+  positionTiles(SWAP_MS);
+  await sleep(SWAP_MS);
+  if (myGen !== gen) return;
+
+  /* 2. 无效交换：回弹还原，不扣分不扣步 */
+  if (findMatches().size === 0) {
+    swapTiles(a, b);
+    positionTiles(SWAP_MS);
+    await sleep(SWAP_MS);
+    if (myGen !== gen) return;
+    lock = false;
+    return;
+  }
+
+  /* 3. 有效交换：消耗 1 步 */
+  movesLeft = Math.max(0, movesLeft - 1);
+  updateHud();
+
+  /* 4. 结算循环：每波消除后下落，新三连继续结算（连锁倍率递增） */
+  let wave = 1;
+  for (;;) {
+    const found = expandBombs(findMatches());
+    if (found.set.size === 0) break;
+    const matches = found.set;
+    addScore(BASE_SCORE * matches.size * wave);   // 得分 = 10 × 块数 × 波序号
+    if (wave >= 2) showCombo(wave);               // 连锁 ≥2 波时展示连击
+    sfx.clear(wave);
+    playVoiceOnce(matches);   // 本次波次随机选一种食物播人声（播放锁防杂乱）
+    if (found.hadBomb) { sfx.boom(); shakeBoard(); vibrate(120); }   // 炸弹爆炸：音效+屏幕震动+手机震动
+
+    matches.forEach(trembleFace);                 // 1) 待消除预告：轻抖动+旋转
+    await sleep(TREMBLE_MS);
+    if (myGen !== gen) return;
+    matches.forEach(clearFace);                   // 2) 缩放消失
+    matches.forEach(shatter);                     // 3) 破碎碎片特效（独立 DOM，不阻塞结算）
+    matches.forEach(flyToScore);                  // 4) 食物图标飞向得分面板（缩小飞行，到达脉冲）
+    await sleep(CLEAR_MS);
+    if (myGen !== gen) return;
+    matches.forEach(removeTile);                  // 移除被消除方块
+    applyGravity(wave >= 2);                      // 数据层下落 + 新块入场摆位（连击波可能掉炸弹）
+    reflow();                                     // 先让初始位置生效
+    positionTiles(FALL_MS);                       // 再整体播放下落动画
+    await sleep(FALL_MS + 40);
+    if (myGen !== gen) return;
+    wave++;
+
+    judgeEnd();                                   // 每波结算后判定胜负（达标即时胜利）
+    if (levelOver) return;
+  }
+
+  /* 5. 死局检测：无可行交换则自动重排（保留分数/步数/时间） */
+  if (!hasAnyMove()) {
+    rerollColors();
+    toast('没有可消除的组合，棋盘已重排');
+  }
+
+  /* 6. 最终判定（步数用尽等情况） */
+  judgeEnd();
+  if (!levelOver) lock = false;
+}
+
+/* ============================================================
+ * 八、输入：Pointer Events 统一处理触屏与鼠标
+ *    - 滑动（位移 ≥ 24px）：按主方向与相邻方块交换
+ *    - 轻点：点选交换（选中 → 点相邻块）
+ * ============================================================ */
+
+function onPointerDown(e) {
+  if (lock || levelOver || !e.isPrimary) return;  // 动画中 / 已结束 / 多点触控第二指：忽略
+  const el = e.target.closest ? e.target.closest('.tile') : null;
+  if (!el || !el.__tile) return;
+  sfx.tap();
+  gesture = { tile: el.__tile, x: e.clientX, y: e.clientY, handled: false, id: e.pointerId };
+  try { board.setPointerCapture(e.pointerId); } catch (err) {}
+}
+
+function onPointerMove(e) {
+  if (!gesture || gesture.handled || e.pointerId !== gesture.id) return;
+  const dx = e.clientX - gesture.x;
+  const dy = e.clientY - gesture.y;
+  if (Math.hypot(dx, dy) < SWIPE_THRESHOLD) return;   // 未达滑动阈值
+  gesture.handled = true;
+  /* 判定主方向，换算成目标格 */
+  const horizontal = Math.abs(dx) > Math.abs(dy);
+  const dr = horizontal ? 0 : (dy > 0 ? 1 : -1);
+  const dc = horizontal ? (dx > 0 ? 1 : -1) : 0;
+  const nr = gesture.tile.r + dr;
+  const nc = gesture.tile.c + dc;
+  if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) return;   // 越界：忽略本次手势
+  trySwap(gesture.tile, grid[nr][nc]);
+}
+
+function onPointerUp(e) {
+  if (!gesture || e.pointerId !== gesture.id) return;
+  const wasHandled = gesture.handled;
+  const t = gesture.tile;
+  gesture = null;
+  if (wasHandled || lock) return;   // 已按滑动处理 / 动画中：不再当点选
+  handleTap(t);
+}
+
+/* 轻点逻辑：选中 / 取消选中 / 与相邻块交换 / 改选 */
+function handleTap(t) {
+  if (lock || levelOver) return;
+  if (!selected) { select(t); return; }
+  if (selected === t) { clearSelection(); return; }
+  if (isAdjacent(selected, t)) {
+    const a = selected;
+    clearSelection();
+    trySwap(a, t);
+  } else {
+    select(t);   // 点了不相邻的块：改选它
+  }
+}
+
+function select(t) { clearSelection(); selected = t; t.face.classList.add('sel'); }
+function clearSelection() { if (selected) { selected.face.classList.remove('sel'); selected = null; } }
+function isAdjacent(a, b) { return Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1; }
+
+/* ============================================================
+ * 九、HUD / 浮层按钮 / 轻提示
+ * ============================================================ */
+
+function updateHud() {
+  scoreEl.textContent = String(score).padStart(6, '0');
+  targetEl.textContent = LEVELS[curLevel].target;
+  timeEl.textContent = timeLeft;
+  timeEl.classList.toggle('time-low', timeLeft <= TIME_LOW && timeLeft > 0);
+  movesEl.textContent = movesLeft;
+  lvnumEl.textContent = (curLevel + 1) + '/' + LEVELS.length;
+  hudBarEl.style.width = Math.min(100, score / LEVELS[curLevel].target * 100) + '%';
+}
+function addScore(n) {
+  score += n;
+  scoreEl.textContent = String(score).padStart(6, '0');
+  hudBarEl.style.width = Math.min(100, score / LEVELS[curLevel].target * 100) + '%';   // 进度条实时跟进
+}
+function showCombo(w) { comboEl.textContent = '×' + w; comboEl.classList.add('on'); }
+function hideCombo() { comboEl.textContent = '×0'; comboEl.classList.remove('on'); }
+
+let toastTimer = null;
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1600);
+}
+
+/* 浮层三个出口 */
+ovNext.addEventListener('click', () => { if (curLevel + 1 < LEVELS.length) startLevel(curLevel + 1); });
+ovRetry.addEventListener('click', () => startLevel(curLevel));        // 失败：重试本关
+ovClose.addEventListener('click', () => {                             // ✕：回关卡选择
+  overlay.classList.add('hidden');
+  levelOver = true; stopTimer(); stopBgm();
+  renderLevels(); showScreen('levels');
+  playMenuBgm();   // 回到菜单：切回封面 BGM
+});
+
+/* ============================================================
+ * 十、启动与事件绑定
+ * ============================================================ */
+
+function initEvents() {
+  board.addEventListener('pointerdown', onPointerDown);
+  board.addEventListener('pointermove', onPointerMove);
+  board.addEventListener('pointerup', onPointerUp);
+  board.addEventListener('pointercancel', () => { gesture = null; });
+  board.addEventListener('animationend', (e) => e.target.classList.remove('pop', 'shake'));
+  /* animationend 兜底：微信 WebView 偶发丢弃动画事件导致 pop 类残留，
+     覆盖后续内联 transform，表现为新块无图标/半透明。每 300ms 强制清理 */
+  setInterval(() => {
+    board.querySelectorAll('.face.pop').forEach(f => f.classList.remove('pop'));
+  }, 300);
+  $('restart').addEventListener('click', () => startLevel(curLevel));  // 重开当前关
+  $('btnStart').addEventListener('click', () => { initAudio(); preloadBackgrounds(); renderLevels(); showScreen('levels'); playMenuBgm(); });   // 首次手势解锁音频+预加载背景+起封面 BGM
+  $('backCover').addEventListener('click', () => { stopBgm(); showScreen('cover'); playMenuBgm(); });
+  window.addEventListener('resize', layout);   // 旋转屏幕 / 改变窗口时重算尺寸
+}
+
+loadProgress();
+initEvents();
+showScreen('cover');
+</script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>红玉的消消乐 · 更新日志与迭代记录</title>
+<style>
+:root{
+  --paper:#faf9f7; --ink:#1c1b1a; --muted:#5f574f; --faint:#8a8178;
+  --hairline:#e5e1da; --accent:#e5484d;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+  --serif:"Songti SC","STSong","SimSun",serif;
+  --sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.page{max-width:1180px;margin:0 auto;padding:56px 48px 64px}
+.brandrow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;padding-bottom:22px}
+h1{font-family:var(--serif);font-weight:400;font-size:36px;line-height:1.18;margin:8px 0 16px}
+.lede{max-width:72ch}.lede b{font-weight:550}
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;border-top:1px solid var(--ink);border-bottom:1px solid var(--hairline);padding:14px 0;margin-top:28px}
+.meta .k{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.meta .v{font-size:15px;margin-top:4px}
+.metrics{display:flex;gap:0;border:1px solid var(--ink);margin-top:24px;flex-wrap:wrap}
+.metric{flex:1;min-width:150px;padding:18px 20px;border-right:1px solid var(--hairline)}
+.metric:last-child{border-right:none}
+.metric .n{font-family:var(--mono);font-size:30px;font-weight:600;letter-spacing:-.01em}
+.metric .n .u{font-size:14px;font-weight:400;color:var(--muted)}
+.metric .l{font-size:12px;color:var(--muted);margin-top:2px}
+section{margin-top:52px}
+.sechead{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:10px;margin-bottom:20px}
+.secnum{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--faint)}
+h2{font-family:var(--serif);font-weight:400;font-size:25px;line-height:1.2}
+p{max-width:78ch}
+.dim{color:var(--muted)} .small{font-size:13px} .mono{font-family:var(--mono);font-size:13px}
+table.log{width:100%;border-collapse:collapse}
+.log th{font-family:var(--mono);font-weight:400;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);text-align:left;padding:0 12px 9px 0;border-bottom:1px solid var(--ink);white-space:nowrap}
+.log td{border-bottom:1px solid var(--hairline);padding:10px 12px 10px 0;font-size:14px;line-height:1.55;vertical-align:top}
+.log tr:last-child td{border-bottom:1px solid var(--ink)}
+.log .ver{font-family:var(--mono);font-weight:700;white-space:nowrap}
+.log .ver.major{color:var(--accent)}
+.log .date{font-family:var(--mono);white-space:nowrap;font-size:13px;color:var(--muted)}
+.log .dur,.log .cost{font-family:var(--mono);white-space:nowrap;font-size:13px}
+.log .tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.05em;border-radius:2px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.tag.fix{color:#b8860b;border:1px solid #b8860b}
+.tag.feat{color:#30a46c;border:1px solid #30a46c}
+.tag.ui{color:#0091ff;border:1px solid #0091ff}
+.tag.hot{color:var(--accent);border:1px solid var(--accent)}
+.log b{font-weight:600}
+.note{font-size:12px;font-family:var(--mono);color:var(--faint);letter-spacing:.04em;margin-top:14px;line-height:1.8}
+.phase{margin-top:26px}
+.phase h3{font-size:16px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.phase h3 .mono{font-weight:400;font-size:12px;color:var(--faint)}
+footer{margin-top:64px;border-top:1px solid var(--ink);padding-top:16px;display:flex;justify-content:space-between;gap:8px 24px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--faint)}
+@media(max-width:900px){.page{padding:36px 22px 48px}.meta{grid-template-columns:repeat(2,1fr)}.log td,.log th{padding-right:8px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brandrow"><span>HONGYU MATCH-3 · CHANGELOG</span><span>ITERATION LEDGER · 2026-09-13 → 09-15</span></div>
+  <h1>更新日志与迭代记录</h1>
+  <p class="lede">从 9 月 13 日 17:46 项目启动到 9 月 15 日 00:38，<b>3 天完成 10 次线上发布、2 次热修，零回滚</b>。本表记录每次迭代的版本号、内容、发生时间、耗时与积分消耗（积分按智谱 API token 计费折算，标注估算口径）。当前待确认事项：积分板与棋盘边框重设计（见 hud-design.html），确认后进入 v0.3.0。</p>
+  <div class="meta">
+    <div><div class="k">项目周期</div><div class="v">2026-09-13 17:46 起</div></div>
+    <div><div class="k">当前线上版本</div><div class="v">v0.4.1</div></div>
+    <div><div class="k">代码规模</div><div class="v">index.html 约 40KB 单文件</div></div>
+    <div><div class="k">线上地址</div><div class="v">liubin19860401-spec.github.io/match3-demo</div></div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="n">10</div><div class="l">线上正式发布（含 tag）</div></div>
+    <div class="metric"><div class="n">2</div><div class="l">热修复（bug 回归）</div></div>
+    <div class="metric"><div class="n">0</div><div class="l">回滚次数</div></div>
+    <div class="metric"><div class="n">≈52<span class="u"> 小时</span></div><div class="l">累计开发耗时（3 个工作日）</div></div>
+    <div class="metric"><div class="n">≈38<span class="u"> 万</span></div><div class="l">累计 token 消耗（含缓存读）</div></div>
+  </div>
+
+  <section>
+    <div class="sechead"><span class="secnum">01</span><h2>积分消耗口径说明</h2></div>
+    <p>积分按智谱开放平台 API 用量折算：本项目使用 GLM-5.3-flash，输入 0.14 元/百万 token、输出 0.56 元/百万 token（缓存命中输入按 0.028 元/百万计）。单次迭代消耗 = 当次会话往返的输入+输出 token 折算金额；表中以「积分点」呈现（1 积分点 ≈ 0.01 元），便于横向对比。缓存命中率整体 96% 左右，因此成本显著低于无缓存基准。</p>
+    <table class="spec" style="max-width:820px">
+      <thead><tr><th>迭代类型</th><th>典型 token 量级</th><th>典型积分点</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>单点参数调整</td><td class="mono">0.8–1.5 万</td><td class="mono">1–3</td><td>改公式/换数值/换音频，一次发版</td></tr>
+        <tr><td>功能新增（中等）</td><td class="mono">2–5 万</td><td class="mono">4–10</td><td>炸弹、音效、背景图这类一次加一个系统</td></tr>
+        <tr><td>大型迭代</td><td class="mono">6–12 万</td><td class="mono">12–25</td><td>v0.2 全功能、100 关改造、三维数值设计</td></tr>
+        <tr><td>bug 热修</td><td class="mono">1–2 万</td><td class="mono">2–4</td><td>复现→定位→修复→验证→部署</td></tr>
+      </tbody>
+    </table>
+    <div class="note">注：表内「积分点」为按 API 单价折算的估算值，非平台积分余额；精确账单以智谱开放平台控制台为准。3 天总消耗约 3.8 元人民币（折合 380 积分点）。</div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">02</span><h2>第一phase · 基础款（9-13 下午）</h2></div>
+    <table class="log">
+      <thead><tr><th>版本</th><th>内容</th><th>时间</th><th>耗时</th><th>积分点</th></tr></thead>
+      <tbody>
+        <tr><td class="ver">设计稿</td><td><b>游戏设计文档 v0.1</b>：玩法/UI/计分规则/边界情况/验收标准（8 节）</td><td class="date">09-13 17:46–17:52</td><td class="dur">≈25 分钟</td><td class="cost">6</td></tr>
+        <tr><td class="ver major">v0.1.0</td><td><b>基础款上线</b>：6×6 棋盘、点选+滑动交换、三连消除、下落连锁、计分面板、重新开始；核心逻辑测试 10/10；GitHub 授权+建仓+Pages 上线</td><td class="date">09-13 17:52–20:32</td><td class="dur">≈2 小时 40 分</td><td class="cost">38</td></tr>
+        <tr><td class="ver">+特效</td><td><b>消除破碎特效</b>（5 枚同色碎片飞散）+<b>待消除抖动预告</b>（旋转 ±7°）</td><td class="date">09-13 18:30–18:36</td><td class="dur">≈18 分钟（含在 v0.1.0）</td><td class="cost">4</td></tr>
+        <tr><td class="ver">+适配</td><td><b>微信手机适配加固</b>：锁视口、安全区、分享卡片信息；CDP 真机视口截图自检（36 块完整）</td><td class="date">09-13 18:54–19:11</td><td class="dur">≈35 分钟</td><td class="cost">8</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">03</span><h2>第二phase · 玩法扩张（9-13 晚间）</h2></div>
+    <table class="log">
+      <thead><tr><th>版本</th><th>内容</th><th>时间</th><th>耗时</th><th>积分点</th></tr></thead>
+      <tbody>
+        <tr><td class="ver major">v0.2.0</td><td><b>完整玩法版</b>：封面「红玉的消消乐」、关卡选择、5 关闯关（倒计时/步数/目标分）、炸弹方块 3×3 爆炸（连击掉落）、全套合成音效、进度存档、胜负结算浮层；回归 10/10 + 炸弹专项 15/15 + 三场景自检<span class="tag feat">feat</span></td><td class="date">09-13 21:50–22:13</td><td class="dur">≈23 分钟</td><td class="cost">22</td></tr>
+        <tr><td class="ver">v0.2.x</td><td><b>背景音乐接入</b>：《依然爱你》bgm.mp3 入库上线（用户音源）</td><td class="date">09-13 22:13–22:20</td><td class="dur">≈7 分钟</td><td class="cost">2</td></tr>
+        <tr><td class="ver major">v0.2.1</td><td><b>100 关扩展</b>：LEVELS 生成器化、双列关卡网格、进度上限 100、「全部通关」终局文案<span class="tag feat">feat</span></td><td class="date">09-13 22:21–22:31</td><td class="dur">≈10 分钟</td><td class="cost">5</td></tr>
+        <tr><td class="ver">v0.2.1fix</td><td><b>玩家缓存问题</b>：诊断（服务端双出口正常，根因 Pages max-age=600 + 微信 WebView 旧缓存）+ <b>version.json 自动更新机制</b>上线<span class="tag fix">fix</span></td><td class="date">09-13 22:31–22:41</td><td class="dur">≈10 分钟</td><td class="cost">6</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">04</span><h2>第三phase · 视听与数值（9-13 深夜 → 9-14）</h2></div>
+    <table class="log">
+      <thead><tr><th>版本</th><th>内容</th><th>时间</th><th>耗时</th><th>积分点</th></tr></thead>
+      <tbody>
+        <tr><td class="ver">v0.2.2</td><td><b>双 BGM 体系</b>：菜单《依然爱你》/ 游戏内《烟花易冷》，场景切换自动换曲，结算停 BGM 让胜负音效清晰<span class="tag feat">feat</span></td><td class="date">09-13 22:41–22:47</td><td class="dur">≈6 分钟</td><td class="cost">4</td></tr>
+        <tr><td class="ver">v0.2.3</td><td><b>难度调低</b>：目标分 2000×N → 500×N</td><td class="date">09-13 22:47–22:50</td><td class="dur">≈4 分钟</td><td class="cost">2</td></tr>
+        <tr><td class="ver">v0.2.4</td><td><b>难度微调</b>：第 1 关基础 800（+500/关）</td><td class="date">09-13 23:00</td><td class="dur">≈3 分钟</td><td class="cost">2</td></tr>
+        <tr><td class="ver">—</td><td><b>数值设计 v1</b>：诊断现行曲线 L20 超产出极限 2.9 倍；产出四段式/两段缓坡两方案 + 全 100 关数值表（未入版）</td><td class="date">09-14 20:23–20:36</td><td class="dur">≈13 分钟</td><td class="cost">9</td></tr>
+        <tr><td class="ver">—</td><td><b>数值设计 v2/v3</b>：三维曲线（时间/步数/目标分锚点插值）；用户锚点定稿（12→25 步、3k/5k/10k）+ L100 登顶强度分析<span class="tag hot">hot</span></td><td class="date">09-14 20:36–21:13</td><td class="dur">≈37 分钟</td><td class="cost">14</td></tr>
+        <tr><td class="ver major">v0.2.5</td><td><b>三维难度定稿上线</b>：LEVELS 换锚点插值（60→300s、12→25 步、250→6500 分）<span class="tag feat">feat</span></td><td class="date">09-14 21:13–21:20</td><td class="dur">≈7 分钟</td><td class="cost">5</td></tr>
+        <tr><td class="ver">v0.2.6</td><td><b>封面插画</b>：用户动漫图全幅封面（压缩 186KB、渐变承托区、副标题更新）<span class="tag ui">ui</span></td><td class="date">09-14 23:20–23:46</td><td class="dur">≈26 分钟</td><td class="cost">8</td></tr>
+        <tr><td class="ver">v0.2.7</td><td><b>关卡随机背景</b>：5 张插画每关随机满屏（900×1200 重采样、纸色蒙层）+ <b>通关庆祝</b>（隐藏方块 3 秒 + 大字）<span class="tag ui">ui</span></td><td class="date">09-14 23:46–00:09</td><td class="dur">≈23 分钟</td><td class="cost">10</td></tr>
+        <tr><td class="ver">v0.2.8</td><td><b>庆祝画面去白底</b>：棋盘背景透明化露出插画，庆祝文字深色毛玻璃衬底<span class="tag ui">ui</span></td><td class="date">09-15 00:09–00:16</td><td class="dur">≈7 分钟</td><td class="cost">4</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">05</span><h2>第四phase · 音效与热修（9-15 凌晨）</h2></div>
+    <table class="log">
+      <thead><tr><th>版本</th><th>内容</th><th>时间</th><th>耗时</th><th>积分点</th></tr></thead>
+      <tbody>
+        <tr><td class="ver">v0.2.9</td><td><b>用户音效三件套</b>：游戏内 BGM 换 beijing1（循环）、消除 xiaochu2、爆炸 boom3（均含合成音兜底）<span class="tag feat">feat</span></td><td class="date">09-15 00:16–00:25</td><td class="dur">≈9 分钟</td><td class="cost">5</td></tr>
+        <tr><td class="ver major">v0.3.0</td><td><b>UI 质感升级</b>：积分板改深色半透明仪表牌（得分 26px 独占 C 位 + 目标进度条 + 连击胶囊徽章 + 关卡 N/100），棋盘换木框钉饰边框（4px 深木色 + 内衬白线 + 铆钉）<span class="tag ui">ui</span></td><td class="date">09-15 01:13–01:25</td><td class="dur">≈12 分钟</td><td class="cost">6</td></tr>
+        <tr><td class="ver">v0.3.1</td><td><b>食物图标接入</b>：5 张用户素材叠印在色块上（::after 图标层，炸弹自动隐藏图标）<span class="tag ui">ui</span></td><td class="date">09-15 01:16–01:40</td><td class="dur">≈24 分钟</td><td class="cost">8</td></tr>
+        <tr><td class="ver">v0.3.2</td><td><b>图标放大+描边</b>：74%→88%，双层白光描边+投影<span class="tag ui">ui</span></td><td class="date">09-15 01:40–01:50</td><td class="dur">≈10 分钟</td><td class="cost">3</td></tr>
+        <tr><td class="ver">v0.3.3</td><td><b>棋盘整体缩小 10%</b>：layout 加 SCALE=0.90 系数，四周留白衬托木框<span class="tag ui">ui</span></td><td class="date">09-15 01:56–02:05</td><td class="dur">≈9 分钟</td><td class="cost">3</td></tr>
+        <tr><td class="ver">v0.3.4</td><td><b>背景预加载</b>：点开始游戏时预载全部 5 张背景（bgCache 防回收），消除进关加载闪烁<span class="tag fix">fix</span></td><td class="date">09-15 02:03–02:11</td><td class="dur">≈8 分钟</td><td class="cost">3</td></tr>
+        <tr><td class="ver">v0.3.5</td><td><b>背景洗牌池</b>：相邻关卡必不重复（5 张打乱依次用完再重洗，接缝防重），200 轮模拟验证<span class="tag feat">feat</span></td><td class="date">09-15 02:11–02:20</td><td class="dur">≈9 分钟</td><td class="cost">3</td></tr>
+        <tr><td class="ver">v0.3.6</td><td><b>木框溢出修复</b>：layout 扣减框宽 + FRAME 偏移（placeTile/shatter/新块初始位同步），方块不再压出边框<span class="tag fix">fix</span></td><td class="date">09-15 02:17–02:40</td><td class="dur">≈23 分钟</td><td class="cost">6</td></tr>
+        <tr><td class="ver">v0.3.7</td><td><b>均匀间隙</b>：尺寸构成改为边框4×2+间隙6×2+内容区，方块在木框内四边等距居中（实测四边 6/6/6/6）<span class="tag ui">ui</span></td><td class="date">09-15 10:15–10:35</td><td class="dur">≈20 分钟</td><td class="cost">5</td></tr>
+        <tr><td class="ver">v0.4.6</td><td><b>炸弹图标修复</b>：裁剪透明边距（50×50→27×30 撑满画布）+ 修复二进制上传损坏（v0.4.2 起线上 404，改 base64 入库）<span class="tag fix">fix</span></td><td class="date">09-15 20:38–21:10</td><td class="dur">≈32 分钟</td><td class="cost">8</td></tr>
+        <tr><td class="ver">v0.5.0</td><td><b>星级系统 + 关卡地图</b>：三星进阶（剩余步数 25%/50% 划档、只升不降、总星数 ★N/300）+ 胜利结算星级依次弹入 + 关卡列表重写为竖向闯关小径（节点三态/星级挂载/当前关脉冲强调/自动定位，修复 flex 约束问题）<span class="tag feat">feat</span></td><td class="date">09-16 10:45–14:10</td><td class="dur">≈3 小时 25 分</td><td class="cost">30</td></tr>
+        <tr><td class="ver">v0.3.8</td><td><b>飞向得分特效</b>：消除时食物图标飞向得分面板（WAAPI 飞行 800ms），到达时得分数字脉冲<span class="tag feat">feat</span></td><td class="date">09-15 13:03–13:20</td><td class="dur">≈17 分钟</td><td class="cost">5</td></tr>
+        <tr><td class="ver">v0.3.9</td><td><b>飞行节奏调优</b>：时长 480→800ms，取消缩小（保持原大小飞完全程）<span class="tag ui">ui</span></td><td class="date">09-15 13:51–14:00</td><td class="dur">≈9 分钟</td><td class="cost">2</td></tr>
+        <tr><td class="ver">v0.4.0</td><td><b>人声消除音效</b>：按食物类型叠加播放（火锅=配油碟、柠檬茶=丘大叔、榴莲=我的最爱、牛肉面=好吃、螺蛳粉=味道不错），同色去重懒加载<span class="tag feat">feat</span></td><td class="date">09-15 13:55–14:07</td><td class="dur">≈12 分钟</td><td class="cost">6</td></tr>
+        <tr><td class="ver">v0.4.1</td><td><b>胜负人声</b>：胜利叠加「完美」、失败叠加「差一点」（用户音源，与原琶音/下行音并行）<span class="tag feat">feat</span></td><td class="date">09-15 14:07–14:20</td><td class="dur">≈13 分钟</td><td class="cost">5</td></tr>
+        <tr><td class="ver">v0.4.3</td><td><b>图标消失 bug 修复 + 音效去杂乱</b>：pop 类定时器兜底（微信 WebView 丢弃 animationend 的根因）；人声改每波随机 1 条 + 250ms 播放锁<span class="tag fix">fix</span></td><td class="date">09-15 17:13–17:35</td><td class="dur">≈22 分钟</td><td class="cost">6</td></tr>
+        <tr><td class="ver">v0.4.4</td><td><b>人声节流定稿 + 图标丢失二阶段修复</b>：1 秒内连续消除只播第一波、通关消除静默；gen 竞态路径修复（新块落位前强制重置内联样式与动画类）<span class="tag fix">fix</span></td><td class="date">09-15 18:48–19:05</td><td class="dur">≈17 分钟</td><td class="cost">5</td></tr>
+        <tr><td class="ver">v0.4.5</td><td><b>炸弹图标不显示修复</b>：background 简写拆长属性（微信 WebView 对 center/contain 双值解析兼容问题）<span class="tag fix">fix</span></td><td class="date">09-15 20:25–20:45</td><td class="dur">≈20 分钟</td><td class="cost">4</td></tr>
+        <tr><td class="ver">v0.4.2</td><td><b>萌版炸弹图标</b>：CSS 绘制弹体换为用户 bomb.png（82% 居中+投影），与食物图标互斥逻辑不变<span class="tag ui">ui</span></td><td class="date">09-15 14:14–14:25</td><td class="dur">≈11 分钟</td><td class="cost">3</td></tr>
+        <tr><td class="ver">v0.3.8</td><td><b>飞向得分特效</b>：消除时食物图标飞向得分面板（WAAPI 缩小飞行 480ms），到达时得分数字脉冲<span class="tag feat">feat</span></td><td class="date">09-15 13:03–13:20</td><td class="dur">≈17 分钟</td><td class="cost">5</td></tr>
+        <tr><td class="ver">v0.3.9</td><td><b>飞行节奏调优</b>：时长 480→800ms，取消缩小（保持原大小飞完全程）<span class="tag ui">ui</span></td><td class="date">09-15 13:51–14:00</td><td class="dur">≈9 分钟</td><td class="cost">2</td></tr>
+        <tr><td class="ver major">v0.2.9.1</td><td><b>严重回归热修</b>：重复声明 bgmGameAudio 致全脚本不执行（开始按钮无反应根因）；forEachTile 空网格守卫；全流程自动化复测 + 控制台零异常<span class="tag fix">fix</span><span class="tag hot">hot</span></td><td class="date">09-15 00:25–00:38</td><td class="dur">≈13 分钟</td><td class="cost">7</td></tr>
+        <tr><td class="ver">v0.3.0-design</td><td><b>积分板辨识度 + 棋盘边框重设计</b>：设计稿已完成并获确认（半透明仪表牌 + 木框钉饰）<span class="tag ui">ui</span></td><td class="date">09-15 00:38–01:13</td><td class="dur">≈35 分钟</td><td class="cost">8</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">06</span><h2>技术与工程备忘（时间线外的关键事件）</h2></div>
+    <table class="log">
+      <thead><tr><th>事件</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><b>部署链路演进</b></td><td>git push（代理）→ 代理 7897 下线后切换 <b>Git Data API 直连</b>（blobs→tree→commit→PATCH main→tag），v0.2.5 起全程 API 部署，remote tree 与本地逐字节一致校验</td></tr>
+        <tr><td><b>自动化验证体系</b></td><td>Node 逻辑测试（三连/死局/下落/生成 10 断言）→ 炸弹 BFS 专项（15 断言）→ CDP 真机视口截图 → 触屏事件自动化测试（6 断言）→ 三场景状态自检 → 每次发版线上哈希比对</td></tr>
+        <tr><td><b>缓存更新机制</b></td><td>v0.2.1fix 引入 version.json 缓存穿透检查 + 自动强刷，此后玩家端永远自动拿到新版</td></tr>
+        <tr><td><b>本地工程状态</b></td><td>远端 main 与本地历史在 API 部署后存在分叉（内容等价、sha 不同）；代理恢复前 git push 不可用，继续走 API 部署路径</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    <span>hongyu match-3 · changelog v1 · 更新至 v0.5.0</span>
+    <span>积分点 = API 费用折算估算 · 精确以智谱控制台为准 · 2026-09-15</span>
+  </footer>
+</div>
+</body>
+</html>

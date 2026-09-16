@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>消消乐 Demo · GitHub Pages 部署指南</title>
+<style>
+:root{
+  --paper:#faf9f7; --ink:#1c1b1a; --muted:#5f574f; --faint:#8a8178;
+  --hairline:#e5e1da; --accent:#e5484d;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+  --serif:"Songti SC","STSong","SimSun",serif;
+  --sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.page{max-width:960px;margin:0 auto;padding:56px 48px 64px}
+.brandrow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;padding-bottom:22px}
+h1{font-family:var(--serif);font-weight:400;font-size:36px;line-height:1.18;margin:8px 0 16px}
+.lede{max-width:66ch}.lede b{font-weight:550}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;border-top:1px solid var(--ink);border-bottom:1px solid var(--hairline);padding:14px 0;margin-top:28px}
+.meta .k{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.meta .v{font-size:15px;margin-top:4px}
+section{margin-top:48px}
+.sechead{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:10px;margin-bottom:20px}
+.secnum{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--faint)}
+h2{font-family:var(--serif);font-weight:400;font-size:24px;line-height:1.2}
+p{max-width:74ch}p+p{margin-top:8px}
+ol.steps{list-style:none;counter-reset:s}
+ol.steps li{counter-increment:s;display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--hairline)}
+ol.steps li:last-child{border-bottom:1px solid var(--ink)}
+ol.steps li::before{content:counter(s);font-family:var(--mono);font-size:13px;color:var(--accent);padding-top:4px;min-width:18px}
+code{font-family:var(--mono);font-size:.86em;background:#efece4;border-radius:2px;padding:1px 6px}
+.url{font-family:var(--mono);font-size:14px;background:#efece4;padding:10px 14px;display:inline-block;margin-top:8px;border-radius:2px}
+.path{border:1px solid var(--ink);padding:18px 20px;margin-top:16px}
+.path h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.path .tag{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--accent);border:1px solid var(--accent);border-radius:2px;padding:0 6px;margin-left:8px;vertical-align:2px}
+.path p{font-size:14px;color:var(--muted);margin-bottom:8px}
+.warn{border-left:2px solid var(--accent);padding:2px 0 2px 14px;margin-top:14px;color:var(--muted);font-size:14px}
+footer{margin-top:64px;border-top:1px solid var(--ink);padding-top:14px;display:flex;justify-content:space-between;gap:8px 24px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--faint)}
+@media(max-width:720px){.page{padding:32px 20px 48px}.meta{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brandrow"><span>MATCH-3 DEMO · DEPLOY</span><span>GITHUB PAGES GUIDE</span></div>
+  <h1>GitHub Pages 部署指南</h1>
+  <p class="lede">游戏本体已就绪：单文件 <b>index.html</b>，无构建、无依赖，任何一个静态托管都能直接跑。本地 git 仓库已初始化并完成首次提交，<b>只差一个 GitHub 凭据</b>即可上线。三条路径任选其一，殊途同归。</p>
+  <div class="meta">
+    <div><div class="k">源码位置</div><div class="v">D:\game_project\match3_demo\index.html</div></div>
+    <div><div class="k">本地仓库</div><div class="v">已 init + commit（64d77aa）</div></div>
+    <div><div class="k">托管目标</div><div class="v">GitHub Pages · 静态直出</div></div>
+  </div>
+
+  <section>
+    <div class="sechead"><span class="secnum">01</span><h2>路径对比</h2></div>
+    <div class="path">
+      <h3>路径 A：发我一个 Token<span class="tag">推荐 · 全自动</span></h3>
+      <p>你在 GitHub 网页上生成一个 fine-grained token 发我，我自动完成建仓、推送、开 Pages、验证线上可玩，最后把可分享链接直接发给你。全程约 5 分钟，你只需生成 token 这一步。</p>
+    </div>
+    <div class="path">
+      <h3>路径 B：网页手动上传<span class="tag">零凭据 · 最快动手</span></h3>
+      <p>你在 GitHub 网页上点 5 下：建仓 → 传文件 → 开 Pages。不需要任何 token，不碰命令行，10 分钟内出链接。</p>
+    </div>
+    <div class="path">
+      <h3>路径 C：本机浏览器登录<span class="tag">一次登录长期有效</span></h3>
+      <p>运行一条命令弹出 GitHub 登录窗口，授权后凭据存入 Windows 凭据管理器。以后每次更新代码只需 git push，适合持续迭代。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">02</span><h2>路径 A · 给我 Token 的步骤</h2></div>
+    <ol class="steps">
+      <li><span>浏览器打开 <code>github.com</code> 并登录 → 右上角头像 → <b>Settings</b></span></li>
+      <li><span>左栏最底部 <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b></span></li>
+      <li><span>Token name 随意（如 <code>match3-deploy</code>）；Expiration 选 7 天即可，用完就废</span></li>
+      <li><span><b>Repository access</b> 选 All repositories 或仅指定新仓库均可；<b>Permissions → Repository permissions</b> 里勾选：<code>Administration: Read and write</code>（建仓+开Pages用）、<code>Contents: Read and write</code>（推代码用）</span></li>
+      <li><span>Generate → 复制 <code>github_pat_...</code> 开头的 token 发到对话里</span></li>
+      <li><span>我接手完成后你会收到：仓库地址、线上链接、验证截图。token 用完建议立刻在网页上 Delete</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">03</span><h2>路径 B · 网页手动上传（无需任何凭据给我）</h2></div>
+    <ol class="steps">
+      <li><span>登录 <code>github.com</code> → 右上角 <b>+</b> → <b>New repository</b></span></li>
+      <li><span>仓库名填 <code>match3-demo</code>，选 <b>Public</b>（Pages 免费版要求公开），不要勾 README，点 <b>Create repository</b></span></li>
+      <li><span>新仓库页点 <b>uploading an existing file</b> 链接，把 <code>D:\game_project\match3_demo\index.html</code> 拖进上传区，点 <b>Commit changes</b></span></li>
+      <li><span>仓库页 → <b>Settings</b> → 左栏 <b>Pages</b> → Branch 选 <code>main</code>（若只有 master 则选 master）→ 目录 <code>/ (root)</code> → <b>Save</b></span></li>
+      <li><span>等 1–2 分钟，回到 Settings → Pages 顶部出现绿框地址，即你的游戏链接：</span></li>
+    </ol>
+    <div class="url">https://&lt;你的用户名&gt;.github.io/match3-demo/</div>
+    <div class="warn">注意 URL 末尾的 <code>/</code> 别丢；把这条链接发到微信对话框，朋友点开即玩。</div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">04</span><h2>路径 C · 本机浏览器授权登录</h2></div>
+    <p>在任意终端执行（项目目录内）：</p>
+    <p><code>git credential-manager github login</code></p>
+    <p>会弹出 GitHub 登录窗口 → 浏览器授权 → 凭据自动存入 Windows 凭据管理器。完成后回来说一声「已登录」，我立即续跑建仓推送全流程。此凭据长期有效，以后改完代码 <code>git push</code> 一次即更新线上。</p>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">05</span><h2>微信里分享与打开</h2></div>
+    <ol class="steps">
+      <li><span>复制 Pages 链接，直接粘贴发给朋友（单人或群）——微信会自动生成带标题「消消乐 · 色块 Demo」的卡片</span></li>
+      <li><span>朋友点卡片 → 微信内置浏览器直接开玩，无需下载、无需登录</span></li>
+      <li><span>想要更方便传播：把链接做成二维码（微信搜「二维码生成」小程序），长按识别即开</span></li>
+    </ol>
+    <div class="warn">微信内置浏览器偶有缓存：更新代码后若朋友看到的还是旧版，让对方点右上角「…」→「刷新」即可。</div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">06</span><h2>上线后更新代码的方法</h2></div>
+    <ol class="steps">
+      <li><span>改 <code>index.html</code>（参数区集中了棋盘尺寸/颜色数/动画时长/计分基数）</span></li>
+      <li><span>项目目录下执行：<code>git add index.html</code> → <code>git commit -m "update"</code> → <code>git push</code></span></li>
+      <li><span>约 1 分钟后 Pages 自动更新（Actions 页可看构建进度）</span></li>
+    </ol>
+  </section>
+
+  <footer>
+    <span>match3_demo · 部署指南 v1</span>
+    <span>路径 A/B/C 三选一 · 2026-09-13</span>
+  </footer>
+</div>
+</body>
+</html>

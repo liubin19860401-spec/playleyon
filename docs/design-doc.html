@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>消消乐色块 Demo · 游戏设计文档 v0.1</title>
+<style>
+/* 基础 token：暖纸 + 墨色 + 单一 accent（与游戏红块同色） */
+:root{
+  --paper:#faf9f7;
+  --ink:#1c1b1a;
+  --muted:#5f574f;
+  --faint:#8a8178;
+  --hairline:#e5e1da;
+  --strong:#1c1b1a;
+  --accent:#e5484d;
+  --c1:#e5484d; /* 游戏红 */
+  --c2:#ffb224; /* 游戏琥珀 */
+  --c3:#30a46c; /* 游戏绿 */
+  --c4:#0091ff; /* 游戏蓝 */
+  --c5:#8e4ec6; /* 游戏紫 */
+  --cell:44px;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+  --serif:"Songti SC","STSong","SimSun",serif;
+  --sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.page{max-width:1280px;margin:0 auto;padding:56px 48px 64px}
+a{color:inherit}
+
+/* 页头 */
+.brandrow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;padding-bottom:22px}
+h1{font-family:var(--serif);font-weight:400;font-size:38px;line-height:1.18;letter-spacing:.01em;margin:8px 0 18px}
+.lede{max-width:64ch}
+.lede b{font-weight:550}
+
+/* 元信息行 */
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;border-top:1px solid var(--strong);border-bottom:1px solid var(--hairline);padding:16px 0;margin-top:30px}
+.meta .k{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.meta .v{font-size:15px;margin-top:4px}
+.badge{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--accent);border:1px solid var(--accent);border-radius:2px;padding:0 8px;vertical-align:1px}
+
+/* 章节索引 */
+.index{display:flex;flex-wrap:wrap;gap:6px 24px;padding:12px 0;border-bottom:1px solid var(--hairline);font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+.index a{text-decoration:none;color:var(--muted)}
+.index a:hover{color:var(--accent)}
+
+/* 章节 */
+section{margin-top:56px}
+.sechead{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--strong);padding-bottom:10px;margin-bottom:22px}
+.secnum{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--faint)}
+h2{font-family:var(--serif);font-weight:400;font-size:26px;line-height:1.2;letter-spacing:.01em}
+p{max-width:74ch}
+p+p{margin-top:10px}
+.note{font-size:12px;font-family:var(--mono);color:var(--faint);letter-spacing:.04em;margin-top:12px}
+
+/* 双栏 */
+.cols{display:grid;grid-template-columns:1fr 380px;gap:48px;align-items:start}
+
+/* 色板：内容数据，即游戏方块用色 */
+.pal{display:flex;gap:26px;flex-wrap:wrap;border:1px solid var(--hairline);padding:18px 22px;margin-top:22px;width:max-content;max-width:100%}
+.sw .chip{width:44px;height:44px;border-radius:4px;border:1px solid rgba(28,27,26,.16)}
+.sw .hex{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:8px;letter-spacing:.04em}
+.sw .nm{font-size:13px;color:var(--muted)}
+
+/* 玩法规则列表 */
+.rules{list-style:none;counter-reset:r}
+.rules li{counter-increment:r;display:flex;gap:16px;padding:13px 0;border-bottom:1px solid var(--hairline)}
+.rules li:last-child{border-bottom:1px solid var(--strong)}
+.rules li::before{content:counter(r,decimal-leading-zero);font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.08em;padding-top:5px}
+.rules b{font-weight:600}
+
+/* 棋盘示意图（样例局面） */
+.boardwrap{border:1px solid var(--strong);padding:16px;width:max-content}
+.board{display:grid;grid-template-columns:repeat(6,var(--cell));gap:7px}
+.cell{width:var(--cell);height:var(--cell);border-radius:4px;border:1px solid rgba(28,27,26,.14)}
+.c1{background:var(--c1)}.c2{background:var(--c2)}.c3{background:var(--c3)}.c4{background:var(--c4)}.c5{background:var(--c5)}
+.sel{outline:3px solid var(--ink);outline-offset:2px}
+.tgt{box-shadow:inset 0 0 0 2px rgba(28,27,26,.55)}
+.boardcap{font-size:12px;font-family:var(--mono);color:var(--faint);margin-top:12px;letter-spacing:.03em;max-width:348px;line-height:1.6}
+
+/* 规格表 */
+table.spec{width:100%;border-collapse:collapse}
+.spec th{font-family:var(--mono);font-weight:400;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);text-align:left;padding:0 14px 10px 0;border-bottom:1px solid var(--strong)}
+.spec td{border-bottom:1px solid var(--hairline);padding:12px 14px 12px 0;font-size:15px;line-height:1.65;vertical-align:top}
+.spec tr:last-child td{border-bottom:1px solid var(--strong)}
+.spec td.mono{font-size:13px;letter-spacing:.02em;white-space:nowrap;color:var(--muted)}
+.spec b{font-weight:600}
+.spec td ul{list-style:none}
+.spec td ul li{padding:3px 0}
+
+/* 计分公式 */
+.formula{font-family:var(--mono);font-size:18px;letter-spacing:.02em;border-top:1px solid var(--strong);border-bottom:1px solid var(--hairline);padding:16px 2px;margin:4px 0 20px}
+
+/* UI 布局示意 */
+.schem{border:1px solid var(--strong);width:300px;max-width:100%}
+.sch{padding:14px 16px;border-bottom:1px solid var(--hairline)}
+.sch:last-child{border-bottom:none}
+.sch .t{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.sch .d{font-size:15px;margin-top:2px}
+.sch.zone{padding-top:52px;padding-bottom:52px;text-align:center}
+.schemcap{font-size:12px;font-family:var(--mono);color:var(--faint);margin-top:10px;letter-spacing:.03em}
+
+/* 验收清单 */
+.checks{list-style:none}
+.checks li{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--hairline);font-size:15px}
+.checks li:last-child{border-bottom:1px solid var(--strong)}
+.checks svg{flex:none;margin-top:6px}
+
+/* 页脚 */
+footer{margin-top:72px;border-top:1px solid var(--strong);padding-top:16px;display:flex;justify-content:space-between;gap:8px 24px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--faint)}
+
+@media (max-width:900px){
+  .page{padding:36px 22px 48px}
+  h1{font-size:29px}
+  .meta{grid-template-columns:repeat(2,1fr)}
+  .cols{grid-template-columns:1fr;gap:32px}
+  :root{--cell:36px}
+  .schem{width:100%}
+  .formula{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="brandrow"><span>MATCH-3 · COLOR-BLOCK · H5 DEMO</span><span>DESIGN DOC · v0.1</span></div>
+    <h1>消消乐色块 Demo 游戏设计文档</h1>
+    <p class="lede">一页只讲清楚一件事：在手机浏览器里，用 6×6 的纯色方块把<b>「交换 — 三连 — 下落 — 连锁」</b>的核心循环跑通。本文档是编码前的对齐稿，确认后进入开发。</p>
+  </header>
+
+  <div class="meta">
+    <div><div class="k">版本</div><div class="v">v0.1 <span class="badge">待确认</span></div></div>
+    <div><div class="k">日期</div><div class="v">2026-09-13</div></div>
+    <div><div class="k">平台</div><div class="v">H5 · 手机竖屏优先</div></div>
+    <div><div class="k">技术栈</div><div class="v">单文件 HTML + CSS + 原生 JS</div></div>
+  </div>
+
+  <nav class="index">
+    <a href="#s01">01 概述</a><a href="#s02">02 核心玩法</a><a href="#s03">03 触屏交互</a><a href="#s04">04 界面布局</a><a href="#s05">05 计分规则</a><a href="#s06">06 边界情况</a><a href="#s07">07 本期范围</a><a href="#s08">08 验收标准</a>
+  </nav>
+
+  <section id="s01">
+    <div class="sechead"><span class="secnum">01</span><h2>游戏概述</h2></div>
+    <p>本期目标是在手机浏览器里跑通一条完整的玩法循环：<b>交换相邻色块，凑成横竖三连消除，方块下落补位并触发连锁反应</b>。棋盘 6×6 共 36 格，方块只用 5 种纯色；先验证手感与规则是否成立，美术素材、关卡系统都不在本期。</p>
+    <p>全篇共 8 节：玩法、交互、UI、计分、边界、范围、验收。文中出现的数值（色板、动画时长、计分示例）均为编码时直接采用的定稿值。</p>
+    <div class="pal">
+      <div class="sw"><div class="chip" style="background:var(--c1)"></div><div class="hex">#E5484D</div><div class="nm">红</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c2)"></div><div class="hex">#FFB224</div><div class="nm">琥珀</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c3)"></div><div class="hex">#30A46C</div><div class="nm">绿</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c4)"></div><div class="hex">#0091FF</div><div class="nm">蓝</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c5)"></div><div class="hex">#8E4EC6</div><div class="nm">紫</div></div>
+    </div>
+    <div class="note">游戏内方块用色（内容数据）：5 色即全部素材，编码直接取用以上 hex 值。</div>
+  </section>
+
+  <section id="s02">
+    <div class="sechead"><span class="secnum">02</span><h2>核心玩法</h2></div>
+    <div class="cols">
+      <ol class="rules">
+        <li><span><b>棋盘与生成</b> — 6×6 共 36 格，从 5 色中随机生成；初始局面保证不含现成三连，且至少存在一组可行交换。</span></li>
+        <li><span><b>交换</b> — 只允许交换上下左右相邻的两个方块；斜向、跨行交换一律无效。</span></li>
+        <li><span><b>消除判定</b> — 交换完成后立即扫描全盘，同一横排或同一竖列出现 3 个及以上同色方块即消除。</span></li>
+        <li><span><b>无效交换</b> — 交换未产生任何消除时，两个方块回弹还原，棋盘不变、不扣分。</span></li>
+        <li><span><b>下落与连锁</b> — 消除后上方方块垂直下落补位，顶部生成新方块落入；落定后再次扫描，新消除进入下一连锁波，得分倍率随之提高。</span></li>
+      </ol>
+      <div>
+        <div class="boardwrap">
+          <div class="board">
+            <div class="cell c4"></div><div class="cell c2"></div><div class="cell c5"></div><div class="cell c1"></div><div class="cell c3"></div><div class="cell c2"></div>
+            <div class="cell c2"></div><div class="cell c5"></div><div class="cell c1"></div><div class="cell c4"></div><div class="cell c2"></div><div class="cell c4"></div>
+            <div class="cell c1"></div><div class="cell c1"></div><div class="cell c3 tgt"></div><div class="cell c1 sel"></div><div class="cell c4"></div><div class="cell c2"></div>
+            <div class="cell c5"></div><div class="cell c3"></div><div class="cell c2"></div><div class="cell c4"></div><div class="cell c1"></div><div class="cell c5"></div>
+            <div class="cell c3"></div><div class="cell c4"></div><div class="cell c5"></div><div class="cell c2"></div><div class="cell c5"></div><div class="cell c3"></div>
+            <div class="cell c4"></div><div class="cell c1"></div><div class="cell c2"></div><div class="cell c5"></div><div class="cell c3"></div><div class="cell c1"></div>
+          </div>
+          <div class="boardcap">示意 · 样例局面：第 3 行选中红块（描边）与其左侧绿块交换，与行首两枚红块连成横向三连。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s03">
+    <div class="sechead"><span class="secnum">03</span><h2>触屏交互</h2></div>
+    <table class="spec">
+      <thead><tr><th>操作</th><th>触发方式</th><th>处理逻辑</th></tr></thead>
+      <tbody>
+        <tr><td><b>点选交换</b></td><td>轻点方块选中（描边高亮），再轻点相邻方块</td><td>与相邻块交换；若点的是不相邻的块，则改选新块</td></tr>
+        <tr><td><b>滑动交换</b></td><td>按住方块向上下左右滑动，位移超过约 24px</td><td>按滑动主方向与对应邻居直接交换</td></tr>
+        <tr><td><b>无效交换</b></td><td>交换后没有任何三连</td><td>双方回弹还原，不扣分、不消耗任何资源</td></tr>
+        <tr><td><b>动画锁</b></td><td>消除、下落、连锁播放期间触摸屏幕</td><td>全局状态锁屏蔽输入，动画结束后才接受新操作</td></tr>
+        <tr><td><b>桌面兼容</b></td><td>鼠标点击 / 拖拽</td><td>统一用 Pointer Events 实现，桌面浏览器可直接调试</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="s04">
+    <div class="sechead"><span class="secnum">04</span><h2>界面布局</h2></div>
+    <div class="cols">
+      <p>布局只有三块：顶部分数面板、中间棋盘、底部重新开始按钮。竖屏优先、单屏放下，不滚动；棋盘宽度取 min(屏宽 − 32px, 480px)，保证 360px 宽的小屏也不溢出。页面锁定双指缩放，禁用长按选中文字，避免触屏误操作。</p>
+      <div>
+        <div class="schem">
+          <div class="sch"><div class="t">TOP</div><div class="d">分数面板 — SCORE 000000 · 连击 ×N</div></div>
+          <div class="sch zone"><div class="t">BOARD</div><div class="d">6×6 棋盘 · 触控区</div></div>
+          <div class="sch"><div class="t">ACTION</div><div class="d">重新开始 — 全宽按钮</div></div>
+        </div>
+        <div class="schemcap">竖屏单屏布局示意，比例非精确。</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s05">
+    <div class="sechead"><span class="secnum">05</span><h2>计分规则</h2></div>
+    <div class="formula">单波得分 = 10 × 该波消除块数 × 连击波序号</div>
+    <table class="spec">
+      <thead><tr><th>连锁波</th><th>事件（样例）</th><th>计算</th><th>累计得分</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">WAVE 1</td><td>首次交换消除 3 块</td><td class="mono">10 × 3 × 1</td><td class="mono">30</td></tr>
+        <tr><td class="mono">WAVE 2</td><td>下落补位后连锁消除 4 块</td><td class="mono">10 × 4 × 2</td><td class="mono">110</td></tr>
+        <tr><td class="mono">WAVE 3</td><td>再次连锁消除 3 块</td><td class="mono">10 × 3 × 3</td><td class="mono">200</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:14px">4 连、5 连不另设特殊奖励，按块数自然多得分；连击波序号只在同一次操作引发的连锁内累计，下一次成功交换从 ×1 重新计。表中数值为规则示例。</p>
+  </section>
+
+  <section id="s06">
+    <div class="sechead"><span class="secnum">06</span><h2>边界情况</h2></div>
+    <table class="spec">
+      <thead><tr><th>状态</th><th>处理方式</th></tr></thead>
+      <tbody>
+        <tr><td><b>无效交换</b></td><td>回弹还原，不扣分、不计入连锁</td></tr>
+        <tr><td><b>死局</b></td><td>全盘不存在任何可行交换时自动洗牌，保留已得分数，轻提示「已重排」</td></tr>
+        <tr><td><b>动画中输入</b></td><td>一律忽略，动画结束后才接受新操作，避免状态错乱</td></tr>
+        <tr><td><b>误触与缩放</b></td><td>viewport 禁缩放、touch-action 限制默认手势、禁用长按选中文本</td></tr>
+        <tr><td><b>动画时长初值</b></td><td>交换 150ms · 消除 200ms · 下落 250ms（编码期可调）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="s07">
+    <div class="sechead"><span class="secnum">07</span><h2>本期范围</h2></div>
+    <table class="spec">
+      <thead><tr><th style="width:50%">本期做</th><th>本期不做</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><ul>
+            <li>6×6 三消核心循环（交换、消除、下落、连锁）</li>
+            <li>连击计分与分数面板</li>
+            <li>重新开始按钮</li>
+            <li>触屏 + 鼠标双输入适配</li>
+            <li>死局自动重排</li>
+          </ul></td>
+          <td><ul>
+            <li>图片美术素材（纯色块验证玩法）</li>
+            <li>关卡、步数限制与体力系统</li>
+            <li>音效与震动</li>
+            <li>特殊方块（炸弹、直线消除）</li>
+            <li>排行榜与本地存档</li>
+            <li>APK 打包（放到下一次任务）</li>
+          </ul></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="s08">
+    <div class="sechead"><span class="secnum">08</span><h2>验收标准</h2></div>
+    <ul class="checks">
+      <li><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="#1c1b1a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>手机 Chrome 与微信内置浏览器打开即玩，无需安装、无需登录</span></li>
+      <li><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="#1c1b1a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>交换 → 消除 → 下落 → 连锁全链路不卡死、方块不错位</span></li>
+      <li><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="#1c1b1a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>得分按第 05 节规则累加，重新开始后归零</span></li>
+      <li><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="#1c1b1a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>360px 宽屏幕下棋盘完整显示，无溢出、无遮挡</span></li>
+      <li><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="#1c1b1a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>桌面鼠标可完成同样操作，便于开发期调试</span></li>
+    </ul>
+  </section>
+
+  <footer>
+    <span>状态 · 待确认 → 确认后进入 Node 2 编码</span>
+    <span>match3_demo · 单文件 · 无框架 · 2026-09-13</span>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -532,7 +532,7 @@ body{
     <!-- ================= 封面场景（v0.8.0：视频背景版） ================= -->
   <section id="scr-cover" class="screen on">
     <img class="cover-fallback" src="cover-poster.jpg" alt="" aria-hidden="true">
-    <video id="coverVideo" class="cover-video" src="cover-bg.mp4" poster="cover-poster.jpg" autoplay muted loop playsinline webkit-playsinline="true" x5-playsinline="true" x5-video-player-type="h5" x5-video-player-fullscreen="false" preload="auto"></video>
+    <video id="coverVideo" class="cover-video" src="cover-bg.mp4?v=0102" poster="cover-poster.jpg" autoplay muted loop playsinline webkit-playsinline="true" x5-playsinline="true" x5-video-player-type="h5" x5-video-player-fullscreen="false" x5-video-orientation="portraint" preload="auto"></video>
     <div class="cover-shade"></div>
     <div class="cover-bottom">
       <div class="cover-swatches"><i></i><i></i><i></i><i></i><i></i></div>
@@ -1673,16 +1673,28 @@ function initEvents() {
     const cv = document.getElementById('coverVideo');
     const fb = document.querySelector('.cover-fallback');
     if (!cv) return;
-    const tryPlay = () => { const pr = cv.play(); if (pr && pr.catch) pr.catch(() => {}); };
+    /* X5 部分 版本需要 JS 侧再 muted 一次 */
+    try { cv.muted = true; cv.defaultMuted = true; } catch (e) {}
+    let played = false;
+    const tryPlay = () => {
+      if (played) return;
+      const pr = cv.play();
+      if (pr && pr.catch) pr.catch(() => {});
+      /* 300ms 后确认是否真在播，没播继续等下一个时机 */
+      setTimeout(() => { if (!cv.paused && cv.currentTime > 0) played = true; }, 300);
+    };
     const showFallback = () => { if (fb) fb.style.zIndex = 2; };
     const hideFallback = () => { if (fb) fb.style.zIndex = 0; };
     cv.addEventListener('canplay', hideFallback);
-    cv.addEventListener('playing', hideFallback);
+    cv.addEventListener('playing', () => { played = true; hideFallback(); });
     cv.addEventListener('error', showFallback);
+    /* 多时机重试：立即 / 1s / 2.5s / 4s / JSBridge / 任意触摸 / 页面重新可见 */
     tryPlay();
+    [1000, 2500, 4000].forEach(ms => setTimeout(tryPlay, ms));
     if (window.WeixinJSBridge) { tryPlay(); }
     else { document.addEventListener('WeixinJSBridgeReady', function () { tryPlay(); }, false); }
     document.addEventListener('touchstart', function once() { tryPlay(); document.removeEventListener('touchstart', once); }, { passive: true });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tryPlay(); });
     /* 卡死看门狗：页面可见但 6 秒内 currentTime 无进展 → 重载视频源 */
     let lastT = -1, stuck = 0;
     setInterval(() => {

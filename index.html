@@ -72,18 +72,18 @@ body{
 /* 标题美术字：思源黑体 Heavy 子集内嵌 + 番茄红渐变 + 奶油描边 */
 @font-face{
   font-family:'TitleFont';
-  src:url('title-font.woff2') format('woff2');
+  src:url('font-1.woff2') format('woff2');
   font-weight:900;font-style:normal;font-display:swap;
 }
 .cover-title{
   font-size:40px;font-weight:900;font-family:'TitleFont',-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
   letter-spacing:.06em;margin:0;line-height:1.12;
-  background-image:linear-gradient(180deg,#ff7a4d 0%,#e5484d 55%,#c73a3f 100%);
+  background-image:linear-gradient(180deg,#ffd23f 0%,#ff9f1c 55%,#f4711f 100%);
   background-position:center;background-size:100% 100%;background-repeat:no-repeat;
   -webkit-background-clip:text;background-clip:text;color:transparent;
   -webkit-text-fill-color:transparent;
-  -webkit-text-stroke:1px rgba(255,255,255,.85);
-  text-shadow:0 3px 0 rgba(122,58,24,.18);
+  -webkit-text-stroke:1px rgba(255,255,255,.92);
+  text-shadow:0 3px 0 rgba(122,58,24,.22);
 }
 .cover-sub{
   font-size:12.5px;font-weight:600;color:#6b4a2f;letter-spacing:.2em;margin:0;
@@ -585,7 +585,7 @@ body{
 /* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
    但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
 (function () {
-  var VER = '0.9.1';
+  var VER = '0.9.2';
   try {
     var seen = localStorage.getItem('hongyu_ver');
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })

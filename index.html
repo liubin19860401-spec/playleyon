@@ -34,43 +34,87 @@ body{
 /* 关卡地图场景：约束在视口内，内部 #mapScroll 自行滚动（.app 可增长会吞掉 flex 约束，须显式 min-height:0） */
 #scr-levels{min-height:0}
 
-/* ---------- 封面 ---------- */
-/* ---------- 封面：全幅插画背景 + 底部渐变承托区 ---------- */
+/* ---------- 封面（v0.8.0：视频背景 + 美食色块 + 美术字标题） ---------- */
 #scr-cover{
   justify-content:flex-end;align-items:stretch;text-align:center;gap:0;
   position:relative;border-radius:6px;overflow:hidden;
-  background:url('cover.jpg') center 22% / cover no-repeat #f9e8ee; /* 人物上半部完整露出，偏粉底色与插画相融 */
+  background-color:#f9e8ee; /* 视频加载前的底色 */
   padding:0;
 }
-.cover-shade{position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(to bottom,rgba(244,241,234,0) 0%,rgba(244,241,234,.86) 42%,#f4f1ea 100%);pointer-events:none}
-.cover-bottom{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 22px calc(24px + env(safe-area-inset-bottom))}
+/* 视频背景层：autoplay 静音循环；poster 兜底；object-fit 裁切铺满 */
+.cover-video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center 25%;
+  pointer-events:none;
+}
+.cover-fallback{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%;pointer-events:none}
+/* 底部承托渐变：浅暖纸色，保证文字可读 */
+.cover-shade{position:absolute;left:0;right:0;bottom:0;height:48%;background-image:linear-gradient(to bottom,rgba(244,241,234,0) 0%,rgba(244,241,234,.82) 40%,rgba(249,232,238,.96) 78%,#f9e8ee 100%);background-position:center;background-size:100% 100%;background-repeat:no-repeat;pointer-events:none}
+.cover-bottom{position:relative;display:flex;flex-direction:column;align-items:center;gap:13px;padding:0 22px calc(24px + env(safe-area-inset-bottom))}
+/* 五色块：内嵌美食图标（烤串/汉堡/柠檬/榴莲/火锅=红黄绿紫蓝） */
 .cover-swatches{display:flex;gap:10px}
-.cover-swatches i{width:20px;height:20px;border-radius:4px;display:block;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),0 0 0 2px rgba(255,255,255,.65)}
-.cover-swatches i:nth-child(1){background:#e5484d}
-.cover-swatches i:nth-child(2){background:#ffb224}
-.cover-swatches i:nth-child(3){background:#30a46c}
-.cover-swatches i:nth-child(4){background:#0091ff}
-.cover-swatches i:nth-child(5){background:#8e4ec6}
-.cover-title{font-size:36px;font-weight:700;letter-spacing:.08em;margin:0;color:#1c1b1a;text-shadow:0 1px 0 rgba(255,255,255,.8)}
-.cover-sub{font-size:12px;color:#3f3a33;letter-spacing:.18em;margin:0}
-#btnStart{box-shadow:0 0 0 1px rgba(28,27,26,.25)}
-
-/* ---------- 通用按钮 ---------- */
-.primary-btn{
-  border:none;background:#1c1b1a;color:#f4f1ea;
-  font-size:17px;font-weight:600;font-family:inherit;
-  padding:15px 18px;border-radius:4px;cursor:pointer;
-  touch-action:manipulation;width:100%;
+.cover-swatches i{
+  width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),inset 0 2px 2px rgba(255,255,255,.35),0 0 0 2px rgba(255,255,255,.75),0 3px 6px rgba(28,27,26,.2);
 }
-.primary-btn:active{opacity:.82}
-.primary-btn:focus-visible{outline:3px solid #e5484d;outline-offset:2px}
-.ghost-btn{
-  border:none;background:transparent;color:#7d766c;
-  font-size:14px;font-family:inherit;padding:10px;cursor:pointer;
-  touch-action:manipulation;width:100%;
+.cover-swatches i::after{content:'';width:76%;height:76%;background-position:center;background-size:contain;background-repeat:no-repeat;filter:drop-shadow(0 1px 1px rgba(40,20,5,.25))}
+.cover-swatches i:nth-child(1){background-color:#e5484d}
+.cover-swatches i:nth-child(1)::after{background-image:url('item0.png')}
+.cover-swatches i:nth-child(2){background-color:#ffb224}
+.cover-swatches i:nth-child(2)::after{background-image:url('item1.png')}
+.cover-swatches i:nth-child(3){background-color:#30a46c}
+.cover-swatches i:nth-child(3)::after{background-image:url('item2.png')}
+.cover-swatches i:nth-child(4){background-color:#8e4ec6}
+.cover-swatches i:nth-child(4)::after{background-image:url('item3.png')}
+.cover-swatches i:nth-child(5){background-color:#0091ff}
+.cover-swatches i:nth-child(5)::after{background-image:url('item4.png')}
+/* 标题美术字：思源黑体 Heavy 子集内嵌 + 番茄红渐变 + 奶油描边 */
+@font-face{
+  font-family:'TitleFont';
+  src:url('title-font.woff2') format('woff2');
+  font-weight:900;font-style:normal;font-display:swap;
 }
-.ghost-btn:active{color:#1c1b1a}
-
+.cover-title{
+  font-size:40px;font-weight:900;font-family:'TitleFont',-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  letter-spacing:.06em;margin:0;line-height:1.12;
+  background-image:linear-gradient(180deg,#ff7a4d 0%,#e5484d 55%,#c73a3f 100%);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-fill-color:transparent;
+  -webkit-text-stroke:1px rgba(255,255,255,.85);
+  text-shadow:0 3px 0 rgba(122,58,24,.18);
+}
+.cover-sub{
+  font-size:12.5px;font-weight:600;color:#6b4a2f;letter-spacing:.2em;margin:0;
+  background-color:rgba(255,255,255,.55);border-radius:999px;padding:3px 14px;
+  box-shadow:0 1px 3px rgba(28,27,26,.12);
+}
+/* 开始按钮：番茄红大胶囊 + 高光材质 + 按压回弹 */
+#btnStart{
+  width:82%;height:56px;border:none;border-radius:999px;cursor:pointer;position:relative;overflow:hidden;
+  font-family:inherit;font-size:19px;font-weight:800;letter-spacing:.3em;text-indent:.3em;color:#fff;
+  background-color:#e5484d;
+  background-image:linear-gradient(180deg,#ff8a4d 0%,#f4553f 48%,#e0353c 100%);
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  box-shadow:0 6px 0 #b93238,0 12px 20px rgba(229,72,77,.35),inset 0 2px 0 rgba(255,255,255,.4);
+  transition:transform 130ms cubic-bezier(.34,1.56,.64,1),box-shadow .13s ease;
+  -webkit-tap-highlight-color:transparent;
+  margin-top:4px;
+}
+#btnStart::after{
+  content:'';position:absolute;top:-20%;bottom:-20%;left:0;width:34px;
+  transform:translateX(-60px) skewX(-22deg);
+  background-image:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.55),rgba(255,255,255,0));
+  background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+  transition:transform .55s ease;pointer-events:none;
+}
+#btnStart:active{
+  transform:translateY(4px) scale(.985);
+  box-shadow:0 2px 0 #b93238,0 5px 10px rgba(229,72,77,.28),inset 0 2px 0 rgba(255,255,255,.35);
+}
+#btnStart:active::after{transform:translateX(430px) skewX(-22deg)}
+@media (max-width:340px){.cover-title{font-size:32px}}
 /* ---------- 关卡选择：闯关地图（v0.7.0：开心消消乐画风 × 五城美食街分章背景） ---------- */
 .map-head{
   flex:none;margin:10px 12px 8px;height:50px;
@@ -323,7 +367,7 @@ body{
 /* ---------- 炸弹方块外观：保留原色参与匹配，叠加用户萌版炸弹图标 ---------- */
 .face.bomb::after{
   content:'';position:absolute;left:50%;top:50%;width:82%;height:82%;
-  transform:translate(-50%,-50%);background-image:url(bomb.png?v=0.7.0);background-position:center;background-size:contain;background-repeat:no-repeat;
+  transform:translate(-50%,-50%);background-image:url(bomb.png?v=0.8.0);background-position:center;background-size:contain;background-repeat:no-repeat;
   filter:drop-shadow(0 1.5px 3px rgba(0,0,0,.35));
 }
 
@@ -386,7 +430,10 @@ body{
 <div class="app">
 
   <!-- ================= 封面场景 ================= -->
+    <!-- ================= 封面场景（v0.8.0：视频背景版） ================= -->
   <section id="scr-cover" class="screen on">
+    <img class="cover-fallback" src="cover-poster.jpg" alt="" aria-hidden="true">
+    <video id="coverVideo" class="cover-video" src="cover-bg.mp4" poster="cover-poster.jpg" autoplay muted loop playsinline preload="auto"></video>
     <div class="cover-shade"></div>
     <div class="cover-bottom">
       <div class="cover-swatches"><i></i><i></i><i></i><i></i><i></i></div>
@@ -468,7 +515,7 @@ body{
 /* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
    但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
 (function () {
-  var VER = '0.7.0';
+  var VER = '0.8.0';
   try {
     var seen = localStorage.getItem('hongyu_ver');
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -1492,6 +1539,15 @@ function initEvents() {
   setInterval(() => {
     board.querySelectorAll('.face.pop').forEach(f => f.classList.remove('pop'));
   }, 300);
+  /* 封面视频兜底：部分 WebView 阻止 autoplay，首次触摸时重试播放；播放失败自动隐藏视频露出海报 */
+  (function () {
+    const cv = document.getElementById('coverVideo');
+    if (!cv) return;
+    const tryPlay = () => { const pr = cv.play(); if (pr && pr.catch) pr.catch(() => { cv.style.display = 'none'; }); };
+    tryPlay();
+    document.addEventListener('touchstart', function once() { tryPlay(); document.removeEventListener('touchstart', once); }, { passive: true });
+    cv.addEventListener('error', () => { cv.style.display = 'none'; });
+  })();
   $('restart').addEventListener('click', () => startLevel(curLevel));  // 重开当前关
   $('btnStart').addEventListener('click', () => { initAudio(); preloadBackgrounds(); renderLevels(); showScreen('levels'); playMenuBgm(); });   // 首次手势解锁音频+预加载背景+起封面 BGM
   $('backCover').addEventListener('click', () => { stopBgm(); showScreen('cover'); playMenuBgm(); });

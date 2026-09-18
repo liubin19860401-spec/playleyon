@@ -585,7 +585,7 @@ body{
 /* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
    但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
 (function () {
-  var VER = '0.9.0';
+  var VER = '0.9.1';
   try {
     var seen = localStorage.getItem('hongyu_ver');
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -1724,6 +1724,7 @@ function initEvents() {
     });
     /* 面板外点击收起 */
     document.addEventListener('click', (e) => {
+      if (!document.contains(e.target)) return; /* 列表重渲染导致旧目标脱离 DOM，不算面板外点击 */
       if (!panel.classList.contains('hidden') && !panel.contains(e.target) && e.target !== tg && !tg.contains(e.target)) panel.classList.add('hidden');
     });
     updateMusicUI();

@@ -38,20 +38,15 @@ body{
 #scr-cover{
   justify-content:flex-end;align-items:stretch;text-align:center;gap:0;
   position:relative;border-radius:6px;overflow:hidden;
-  background-color:#f9e8ee; /* 视频加载前的底色 */
+  background-image:url('cover.jpg');
+  background-position:center 22%;
+  background-size:cover;
+  background-repeat:no-repeat;
+  background-color:#f9e8ee;
   padding:0;
 }
 /* 视频背景层：autoplay 静音循环；poster 兜底；object-fit 裁切铺满 */
-.cover-sprite{
-  position:absolute;inset:0;z-index:1;pointer-events:none;
-  background-image:url('cover-sprite.jpg?v=0120');
-  background-position:0 0;background-repeat:no-repeat;
-  background-size:400% 400%; /* 4x4 网格：每帧显示 1/4 宽高 */
-  animation:spritePlay 2.66s steps(15) infinite;
-}
-@keyframes spritePlay{
-  from{background-position:0 0}
-  to{background-position:-300% -300%} /* 步进至最后一帧（4x4 的 (3,3)） */
+/* 步进至最后一帧（4x4 的 (3,3)） */
 }
 
 /* 底部承托渐变：浅暖纸色，保证文字可读 */
@@ -515,7 +510,6 @@ body{
   <!-- ================= 封面场景 ================= -->
     <!-- ================= 封面场景（v0.8.0：视频背景版） ================= -->
   <section id="scr-cover" class="screen on">
-    <div id="coverSprite" class="cover-sprite" aria-hidden="true"></div>
     <div class="cover-shade"></div>
     <div class="cover-bottom">
       <div class="cover-swatches"><i></i><i></i><i></i><i></i><i></i></div>
@@ -632,7 +626,7 @@ body{
 /* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
    但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
 (function () {
-  var VER = '0.12.0';
+  var VER = '0.12.1';
   try {
     var seen = localStorage.getItem('hongyu_ver');
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })

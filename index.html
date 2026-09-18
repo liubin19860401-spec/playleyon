@@ -42,10 +42,16 @@ body{
   padding:0;
 }
 /* 视频背景层：autoplay 静音循环；poster 兜底；object-fit 裁切铺满 */
-.cover-video{
-  position:absolute;inset:0;width:100%;height:100%;z-index:1;
-  object-fit:cover;object-position:center 25%;
-  pointer-events:none;
+.cover-sprite{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  background-image:url('cover-sprite.jpg?v=0120');
+  background-position:0 0;background-repeat:no-repeat;
+  background-size:400% 400%; /* 4x4 网格：每帧显示 1/4 宽高 */
+  animation:spritePlay 2.66s steps(15) infinite;
+}
+@keyframes spritePlay{
+  from{background-position:0 0}
+  to{background-position:-300% -300%} /* 步进至最后一帧（4x4 的 (3,3)） */
 }
 
 /* 底部承托渐变：浅暖纸色，保证文字可读 */
@@ -509,7 +515,7 @@ body{
   <!-- ================= 封面场景 ================= -->
     <!-- ================= 封面场景（v0.8.0：视频背景版） ================= -->
   <section id="scr-cover" class="screen on">
-    <video id="coverVideo" class="cover-video" src="cover-bg.mp4?v=0111" autoplay muted loop playsinline webkit-playsinline="true" x5-playsinline="true" x5-video-player-type="h5" x5-video-player-fullscreen="false" x5-video-orientation="portrait" preload="auto"></video>
+    <div id="coverSprite" class="cover-sprite" aria-hidden="true"></div>
     <div class="cover-shade"></div>
     <div class="cover-bottom">
       <div class="cover-swatches"><i></i><i></i><i></i><i></i><i></i></div>
@@ -626,7 +632,7 @@ body{
 /* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
    但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
 (function () {
-  var VER = '0.11.1';
+  var VER = '0.12.0';
   try {
     var seen = localStorage.getItem('hongyu_ver');
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -954,14 +960,6 @@ function totalStars() {
  * ============================================================ */
 function showScreen(name) {
   ['cover', 'levels', 'game'].forEach((s) => $('scr-' + s).classList.toggle('on', s === name));
-  /* v0.11.0：每次回到封面都重试视频播放（autoplay 偶发被拦后，切场景是新的可播放时机） */
-  if (name === 'cover') {
-    const cv = document.getElementById('coverVideo');
-    if (cv && cv.style.display !== 'none') {
-      const pr = cv.play();
-      if (pr && pr.catch) pr.catch(() => {});
-    }
-  }
 }
 
 /* 渲染关卡地图（v0.5.0 重写）：竖向闯关小径 + 左右交错节点。
@@ -1653,38 +1651,6 @@ function initEvents() {
   }, 300);
   /* 封面视频：autoplay 修复全家桶——WeixinJSBridge 强制 play + 触摸重试 + 卡死重载
      + fallback 智能显隐（视频可播即藏 fallback；彻底 error 才露海报） */
-  (function () {
-    const cv = document.getElementById('coverVideo');
-    if (!cv) return;
-    /* X5 部分 版本需要 JS 侧再 muted 一次 */
-    try { cv.muted = true; cv.defaultMuted = true; } catch (e) {}
-    let played = false;
-    const tryPlay = () => {
-      if (played) return;
-      const pr = cv.play();
-      if (pr && pr.catch) pr.catch(() => {});
-      /* 300ms 后确认是否真在播，没播继续等下一个时机 */
-      setTimeout(() => { if (!cv.paused && cv.currentTime > 0) played = true; }, 300);
-    };
-    cv.addEventListener('playing', () => { played = true; });
-    /* 多时机重试：立即 / 1s / 2.5s / 4s / JSBridge / 任意触摸 / 页面重新可见 */
-    tryPlay();
-    [1000, 2500, 4000].forEach(ms => setTimeout(tryPlay, ms));
-    if (window.WeixinJSBridge) { tryPlay(); }
-    else { document.addEventListener('WeixinJSBridgeReady', function () { tryPlay(); }, false); }
-    document.addEventListener('touchstart', function once() { tryPlay(); document.removeEventListener('touchstart', once); }, { passive: true });
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) tryPlay(); });
-    /* 卡死看门狗：页面可见但 6 秒内 currentTime 无进展 → 重载视频源 */
-    let lastT = -1, stuck = 0;
-    setInterval(() => {
-      if (!cv || document.hidden) return;
-      if (cv.readyState >= 2 && !cv.paused) {
-        if (Math.abs(cv.currentTime - lastT) < 0.01) { stuck++; if (stuck >= 2) { cv.load(); tryPlay(); stuck = 0; } }
-        else stuck = 0;
-        lastT = cv.currentTime;
-      }
-    }, 3000);
-  })();
   $('restart').addEventListener('click', () => startLevel(curLevel));  // 重开当前关
   /* ============ 音乐播放器（v0.9.0）：音量/切歌/模式/列表 ============ */
   const MUSIC_LIB = [

@@ -47,8 +47,7 @@ body{
   object-fit:cover;object-position:center 25%;
   pointer-events:none;
 }
-.cover-fallback{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%;pointer-events:none;z-index:0}
-.cover-video{z-index:1}
+
 /* 底部承托渐变：浅暖纸色，保证文字可读 */
 .cover-shade{position:absolute;left:0;right:0;bottom:0;height:48%;z-index:2;background-image:linear-gradient(to bottom,rgba(244,241,234,0) 0%,rgba(244,241,234,.82) 40%,rgba(249,232,238,.96) 78%,#f9e8ee 100%);background-position:center;background-size:100% 100%;background-repeat:no-repeat;pointer-events:none}
 .cover-bottom{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;gap:13px;padding:0 22px calc(24px + env(safe-area-inset-bottom))}
@@ -510,8 +509,7 @@ body{
   <!-- ================= 封面场景 ================= -->
     <!-- ================= 封面场景（v0.8.0：视频背景版） ================= -->
   <section id="scr-cover" class="screen on">
-    <img class="cover-fallback" src="cover-poster.jpg" alt="" aria-hidden="true">
-    <video id="coverVideo" class="cover-video" src="cover-bg.mp4?v=0102" poster="cover-poster.jpg" autoplay muted loop playsinline webkit-playsinline="true" x5-playsinline="true" x5-video-player-type="h5" x5-video-player-fullscreen="false" x5-video-orientation="portraint" preload="auto"></video>
+    <video id="coverVideo" class="cover-video" src="cover-bg.mp4?v=0111" autoplay muted loop playsinline webkit-playsinline="true" x5-playsinline="true" x5-video-player-type="h5" x5-video-player-fullscreen="false" x5-video-orientation="portrait" preload="auto"></video>
     <div class="cover-shade"></div>
     <div class="cover-bottom">
       <div class="cover-swatches"><i></i><i></i><i></i><i></i><i></i></div>
@@ -628,7 +626,7 @@ body{
 /* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
    但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
 (function () {
-  var VER = '0.11.0';
+  var VER = '0.11.1';
   try {
     var seen = localStorage.getItem('hongyu_ver');
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -1657,7 +1655,6 @@ function initEvents() {
      + fallback 智能显隐（视频可播即藏 fallback；彻底 error 才露海报） */
   (function () {
     const cv = document.getElementById('coverVideo');
-    const fb = document.querySelector('.cover-fallback');
     if (!cv) return;
     /* X5 部分 版本需要 JS 侧再 muted 一次 */
     try { cv.muted = true; cv.defaultMuted = true; } catch (e) {}
@@ -1669,11 +1666,7 @@ function initEvents() {
       /* 300ms 后确认是否真在播，没播继续等下一个时机 */
       setTimeout(() => { if (!cv.paused && cv.currentTime > 0) played = true; }, 300);
     };
-    const showFallback = () => { if (fb) fb.style.zIndex = 2; };
-    const hideFallback = () => { if (fb) fb.style.zIndex = 0; };
-    cv.addEventListener('canplay', hideFallback);
-    cv.addEventListener('playing', () => { played = true; hideFallback(); });
-    cv.addEventListener('error', showFallback);
+    cv.addEventListener('playing', () => { played = true; });
     /* 多时机重试：立即 / 1s / 2.5s / 4s / JSBridge / 任意触摸 / 页面重新可见 */
     tryPlay();
     [1000, 2500, 4000].forEach(ms => setTimeout(tryPlay, ms));

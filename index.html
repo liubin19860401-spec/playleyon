@@ -341,7 +341,8 @@ body{
   -webkit-tap-highlight-color:transparent;
 }
 .mp-mode.on{background-color:#e5484d;color:#fff;border-color:#e5484d;box-shadow:0 2px 6px rgba(229,72,77,.4)}
-.mp-list{flex-direction:column;align-items:stretch;gap:6px}
+.mp-list{flex-direction:column;align-items:stretch;gap:6px;max-height:44vh;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.mp-list::-webkit-scrollbar{display:none}
 .mp-item{
   display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:9px;cursor:pointer;
   background-color:rgba(255,255,255,.05);border:1px solid transparent;
@@ -626,7 +627,7 @@ body{
 /* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
    但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
 (function () {
-  var VER = '0.12.1';
+  var VER = '0.13.0';
   try {
     var seen = localStorage.getItem('hongyu_ver');
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -1648,9 +1649,36 @@ function initEvents() {
   $('restart').addEventListener('click', () => startLevel(curLevel));  // 重开当前关
   /* ============ 音乐播放器（v0.9.0）：音量/切歌/模式/列表 ============ */
   const MUSIC_LIB = [
-    { name: '轻快旋律', src: 'bgm-chip.mp3' },
-    { name: '北京欢迎你', src: 'beijing1.mp3' },
-    { name: '烟花易冷', src: 'bgm-game.mp3' }
+    { name: '爱在西元前', src: 'm01.mp3' },
+    { name: '安静', src: 'm02.mp3' },
+    { name: '暗号', src: 'm03.mp3' },
+    { name: '爸我回来了', src: 'm04.mp3' },
+    { name: '半岛铁盒', src: 'm05.mp3' },
+    { name: '半兽人', src: 'm06.mp3' },
+    { name: '斗牛', src: 'm07.mp3' },
+    { name: '对不起', src: 'm08.mp3' },
+    { name: '反方向的钟', src: 'm09.mp3' },
+    { name: '分裂', src: 'm10.mp3' },
+    { name: '黑色幽默', src: 'm11.mp3' },
+    { name: '回到过去', src: 'm12.mp3' },
+    { name: '火车叨位去', src: 'm13.mp3' },
+    { name: '简单爱', src: 'm14.mp3' },
+    { name: '开不了口', src: 'm15.mp3' },
+    { name: '可爱女人', src: 'm16.mp3' },
+    { name: '龙卷风', src: 'm17.mp3' },
+    { name: '龙拳', src: 'm18.mp3' },
+    { name: '米兰的小铁匠', src: 'm19.mp3' },
+    { name: '娘子', src: 'm20.mp3' },
+    { name: '忍者', src: 'm21.mp3' },
+    { name: '上海一九四三', src: 'm22.mp3' },
+    { name: '双截棍', src: 'm23.mp3' },
+    { name: '完美主义', src: 'm24.mp3' },
+    { name: '威廉古堡', src: 'm25.mp3' },
+    { name: '星晴', src: 'm26.mp3' },
+    { name: '爷爷泡的茶', src: 'm27.mp3' },
+    { name: '伊斯坦堡', src: 'm28.mp3' },
+    { name: '印第安老斑鸠', src: 'm29.mp3' },
+    { name: '最后的战役', src: 'm30.mp3' }
   ];
   const musicState = { idx: 1, mode: 'loop', vol: 0.35, wantPlay: false }; /* 默认北京欢迎你（曲库第2首） */
   const musicAudio = new Audio();

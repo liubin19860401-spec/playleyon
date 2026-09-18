@@ -50,8 +50,8 @@ body{
 .cover-fallback{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%;pointer-events:none;z-index:0}
 .cover-video{z-index:1}
 /* 底部承托渐变：浅暖纸色，保证文字可读 */
-.cover-shade{position:absolute;left:0;right:0;bottom:0;height:48%;background-image:linear-gradient(to bottom,rgba(244,241,234,0) 0%,rgba(244,241,234,.82) 40%,rgba(249,232,238,.96) 78%,#f9e8ee 100%);background-position:center;background-size:100% 100%;background-repeat:no-repeat;pointer-events:none}
-.cover-bottom{position:relative;display:flex;flex-direction:column;align-items:center;gap:13px;padding:0 22px calc(24px + env(safe-area-inset-bottom))}
+.cover-shade{position:absolute;left:0;right:0;bottom:0;height:48%;z-index:2;background-image:linear-gradient(to bottom,rgba(244,241,234,0) 0%,rgba(244,241,234,.82) 40%,rgba(249,232,238,.96) 78%,#f9e8ee 100%);background-position:center;background-size:100% 100%;background-repeat:no-repeat;pointer-events:none}
+.cover-bottom{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;gap:13px;padding:0 22px calc(24px + env(safe-area-inset-bottom))}
 /* 五色块：内嵌美食图标（烤串/汉堡/柠檬/榴莲/火锅=红黄绿紫蓝） */
 .cover-swatches{display:flex;gap:10px}
 .cover-swatches i{
@@ -152,9 +152,29 @@ body{
 }
 /* 章节过渡带：段与段之间奶油色渐变衔接，柔化两张城市图的接缝 */
 .zone-fade{
-  height:88px;flex:none;
-  background-image:linear-gradient(180deg,rgba(255,246,224,0) 0%,#fff6e0 50%,rgba(255,246,224,0) 100%);
+  position:relative;height:96px;flex:none;margin:0 -12px;
+  background-image:linear-gradient(180deg,rgba(255,246,224,0) 0%,rgba(255,251,240,.78) 50%,rgba(255,246,224,0) 100%);
   background-position:center;background-size:100% 100%;background-repeat:no-repeat;
+}
+/* 云海主体：白色圆带横贯 */
+.zone-fade::before{
+  content:'';position:absolute;left:-4px;right:-4px;top:50%;height:34px;margin-top:-17px;
+  border-radius:999px;
+  background-color:#fffdf6;
+  box-shadow:0 5px 0 rgba(214,178,138,.22),inset 0 -6px 0 rgba(214,178,138,.16);
+}
+/* 云朵弧群：坐在云带上的大小鼓包 */
+.zone-fade::after{
+  content:'';position:absolute;left:0;right:0;top:50%;height:46px;margin-top:-46px;
+  background-image:
+    radial-gradient(circle at 8% 100%,#fffdf6 0 22px,transparent 23px),
+    radial-gradient(circle at 20% 100%,#fffdf6 0 31px,transparent 32px),
+    radial-gradient(circle at 33% 100%,#fffdf6 0 24px,transparent 25px),
+    radial-gradient(circle at 47% 100%,#fffdf6 0 35px,transparent 36px),
+    radial-gradient(circle at 62% 100%,#fffdf6 0 26px,transparent 27px),
+    radial-gradient(circle at 76% 100%,#fffdf6 0 33px,transparent 34px),
+    radial-gradient(circle at 90% 100%,#fffdf6 0 22px,transparent 23px);
+  background-position:center;background-repeat:no-repeat;background-size:auto;
 }
 .zone-sec.z1{background-image:url('map1.jpg?v=0.7.0')}
 .zone-sec.z2{background-image:url('map2.jpg?v=0.7.0')}
@@ -512,7 +532,7 @@ body{
     <!-- ================= 封面场景（v0.8.0：视频背景版） ================= -->
   <section id="scr-cover" class="screen on">
     <img class="cover-fallback" src="cover-poster.jpg" alt="" aria-hidden="true">
-    <video id="coverVideo" class="cover-video" src="cover-bg.mp4" poster="cover-poster.jpg" autoplay muted loop playsinline preload="auto"></video>
+    <video id="coverVideo" class="cover-video" src="cover-bg.mp4" poster="cover-poster.jpg" autoplay muted loop playsinline webkit-playsinline="true" x5-playsinline="true" x5-video-player-type="h5" x5-video-player-fullscreen="false" preload="auto"></video>
     <div class="cover-shade"></div>
     <div class="cover-bottom">
       <div class="cover-swatches"><i></i><i></i><i></i><i></i><i></i></div>
@@ -625,7 +645,7 @@ body{
 /* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
    但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
 (function () {
-  var VER = '0.10.0';
+  var VER = '0.10.1';
   try {
     var seen = localStorage.getItem('hongyu_ver');
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })

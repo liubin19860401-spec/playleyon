@@ -618,7 +618,7 @@ body{
 /* 版本更新检查：version.json 带缓存穿透参数拉取（Pages 对它也是 max-age=600，
    但加时间戳后每次都绕过本地缓存）；发现版本变化自动强刷一次，玩家无需手动刷新 */
 (function () {
-  var VER = '0.14.0';
+  var VER = '0.14.1';
   try {
     var seen = localStorage.getItem('hongyu_ver');
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -1723,21 +1723,38 @@ function initEvents() {
     const tg = document.getElementById('bbMusic');
     if (!panel || !tg) return;
     tg.addEventListener('click', (e) => { e.stopPropagation(); panel.classList.toggle('hidden'); updateMusicUI(); });
-    /* v0.14.0（需求①）：登录封面即起播——加载后立即尝试自动播放（部分 WebView 允许），
-       失败则由 WeixinJSBridge ready 回调与首次任意手势补启；起播成功后自动摘除手势兜底 */
+    /* v0.14.1（需求①）：封面即起播强化——五级兜底链：
+       A 加载即尝试（部分 WebView 允许直接播）
+       B 微信 JSBridge：ready 事件 + 5s 轮询双保险（v0.14.0 只挂事件，可能错过时机；
+         Android 微信经 getNetworkType 回调可免手势起播）
+       C 延时重试 0.6/1.5/3s（部分内核页面静置后放行）
+       D 首次任意手势 pointerdown/touchstart/touchend/click（capture 阶段；
+         iOS 微信系统级硬约束必须首次触屏，点「开始游戏」那一下立即响起）
+       E 后台切回自动续播。起播成功后兜底自动休眠 */
     ensureStarted();
-    const kickMusic = () => { if (musicState.wantPlay && musicState.mode !== 'off' && musicAudio.paused) playCurrent(); };
-    document.addEventListener('WeixinJSBridgeReady', kickMusic, false);
-    if (window.WeixinJSBridge) { try { window.WeixinJSBridge.invoke('getNetworkType', {}, kickMusic); } catch (e) {} }
-    const armKick = () => {
-      kickMusic();
-      if (!musicAudio.paused) {
-        document.removeEventListener('pointerdown', armKick);
-        document.removeEventListener('touchstart', armKick);
-      }
+    let musicAutoplayDone = false;
+    const musicKick = () => {
+      if (musicAutoplayDone || !musicState.wantPlay || musicState.mode === 'off') return;
+      if (!musicAudio.paused) { musicAutoplayDone = true; return; }
+      const pr = musicAudio.play();
+      if (pr && pr.catch) pr.catch(() => {});
+      if (!musicAudio.paused) musicAutoplayDone = true;
     };
-    document.addEventListener('pointerdown', armKick);
-    document.addEventListener('touchstart', armKick);
+    ['pointerdown', 'touchstart', 'touchend', 'click'].forEach((f) =>
+      document.addEventListener(f, musicKick, { capture: true, passive: true }));
+    document.addEventListener('WeixinJSBridgeReady', musicKick, false);
+    let wxPolls = 0;
+    const wxTimer = setInterval(() => {
+      if (musicAutoplayDone) { clearInterval(wxTimer); return; }
+      if (window.WeixinJSBridge) {
+        clearInterval(wxTimer);
+        try { window.WeixinJSBridge.invoke('getNetworkType', {}, musicKick); } catch (e) {}
+        return;
+      }
+      if (++wxPolls >= 10) clearInterval(wxTimer);
+    }, 500);
+    [600, 1500, 3000].forEach((ms) => setTimeout(musicKick, ms));
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) musicKick(); });
     document.getElementById('mpVol').addEventListener('input', (e) => {
       musicState.vol = e.target.value / 100;
       musicAudio.volume = musicState.vol;
